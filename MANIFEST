@@ -1,0 +1,13 @@
+Makefile.PL
+lib/XML/FeedPP.pm
+README
+Changes
+MANIFEST
+META.yml
+t/new.t
+t/encoding.t
+t/datetime.t
+t/rss.t
+t/rdf.t
+t/atom.t
+t/round.t

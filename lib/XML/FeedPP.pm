@@ -7,12 +7,12 @@
 #   use warnings;
 # ----------------------------------------------------------------
     use vars qw( $VERSION $XMLNS );
-    $VERSION = "0.03";
+    $VERSION = "0.05";
 # ----------------------------------------------------------------
 
 =head1 NAME
 
-XML::FeedPP -- Parse/write/merge WebFeeds of RSS/RDF/Atom formats.
+XML::FeedPP -- Parse/write/merge web feeds, RSS/RDF/Atom
 
 =head1 SYNOPSIS
 
@@ -49,8 +49,9 @@ Merge some RSS/RDF files and convert it into Atom format.
 
 =head1 DESCRIPTION
 
-XML::TreePP module can parses RSS/RDF/Atom files, convert it and generate it.
-This is a pure Perl implementation and do not requires any other modules 
+XML::FeedPP module parses a RSS/RDF/Atom file, converts its format,
+marges another files, and generates a XML file.
+This module is a pure Perl implementation and do not requires any other modules
 expcept for XML::FeedPP.
 
 =head1  METHODS
@@ -101,7 +102,7 @@ Merge RSS/RDF/Atom file into the existing $feed instance.
 This method generates XML source as string and returns it.
 The output $encoding is optional and the default value is 'UTF-8'.
 On Perl 5.8 and later, any encodings supported by Encode module are available.
-On Perl 5.005 and 5.6.1, four encodings supported by Jcode module are only 
+On Perl 5.005 and 5.6.1, four encodings supported by Jcode module are only
 available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and 'ISO-2022-JP'.
 But normaly, 'UTF-8' is recommended to the compatibilities.
 
@@ -109,41 +110,6 @@ But normaly, 'UTF-8' is recommended to the compatibilities.
 
 This method generate XML file.
 The output $encoding is optional and the default value is 'UTF-8'.
-
-=head2  $feed->title( $text );
-
-This method sets/gets the value of the feed's <title> element.
-This method returns the current value when the $title is not defined.
-
-=head2  $feed->description( $html );
-
-This method sets/gets the value of the feed's <description> element in HTML.
-This method returns the current value when the $html is not defined.
-
-=head2  $feed->pubDate( $date );
-
-This method sets/gets the value of the feed's <pubDate> element for RSS,
-<dc:date> element for RDF, or <created> element for Atom.
-This method returns the current value when the $date is not defined.
-See also the DATE/TIME FORMATS section.
-
-=head2  $feed->copyright( $text );
-
-This method sets/gets the value of the feed's <copyright> element for RSS/Atom,
-or <dc:rights> element for RDF.
-This method returns the current value when the $text is not defined.
-
-=head2  $feed->link( $url );
-
-This method sets/gets the value of the URL of the web site 
-as the feed's <link> element for RSS/RDF/Atom.
-This method returns the current value when the $url is not defined.
-
-=head2  $feed->language( $lang );
-
-This method sets/gets the value of the item's <pubDate> element for RSS,
-<dc:language> element for RDF, or <feed xml:lang=""> attribute for Atom.
-This method returns the current value when the $lang is not defined.
 
 =head2  $item = $feed->add_item( $url );
 
@@ -160,83 +126,142 @@ If $num is defined, this method returns the $num-th item's object.
 If $num is not defined, this method returns the list of all items
 on array context or the number of items on scalar context.
 
+=head2  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
+
+This code sets the XML namespace at the document root of the feed.
+
+=head2  $url = $feed->xmlns( 'xmlns:media' );
+
+This code returns the URL of the specified XML namespace.
+
+=head2  @list = $feed->xmlns();
+
+This code returns the list of all XML namespace used in the feed.
+
+=head1  METHODS FOR CHANNEL/FEED
+
+=head2  $feed->title( $text );
+
+This method sets/gets the feed's <title> value.
+This method returns the current value when the $title is not defined.
+
+=head2  $feed->description( $html );
+
+This method sets/gets the feed's <description> value in HTML.
+This method returns the current value when the $html is not defined.
+
+=head2  $feed->pubDate( $date );
+
+This method sets/gets the feed's <pubDate> value for RSS,
+<dc:date> value for RDF, or <created> value for Atom.
+This method returns the current value when the $date is not defined.
+See also the DATE/TIME FORMATS section.
+
+=head2  $feed->copyright( $text );
+
+This method sets/gets the feed's <copyright> value for RSS/Atom,
+or <dc:rights> element for RDF.
+This method returns the current value when the $text is not defined.
+
+=head2  $feed->link( $url );
+
+This method sets/gets the URL of the web site
+as the feed's <link> value for RSS/RDF/Atom.
+This method returns the current value when the $url is not defined.
+
+=head2  $feed->language( $lang );
+
+This method sets/gets the feed's <language> value for RSS,
+<dc:language> element for RDF, or <feed xml:lang=""> attribute for Atom.
+This method returns the current value when the $lang is not defined.
+
+=head2  $feed->image( $url, $title, $link, $description, $width, $height )
+
+This method sets/gets the feed's <image> value and its child nodes
+for RSS/RDF. This method is ignored for Atom.
+This method returns the current values as array when any arguments are not defined.
+
+=head1  METHODS FOR ITEM/ENTRY
+
 =head2  $item->title( $text );
 
-This method sets/gets the value of the item's <title> element.
+This method sets/gets the item's <title> value.
 This method returns the current value when the $text is not defined.
 
 =head2  $item->description( $html );
 
-This method sets/gets the value of the item's <description> element in HTML.
+This method sets/gets the item's <description> value in HTML.
 This method returns the current value when the $text is not defined.
 
 =head2  $item->pubDate( $date );
 
-This method sets/gets the value of the item's <pubDate> element for RSS,
+This method sets/gets the item's <pubDate> value for RSS,
 <dc:date> element for RDF, or <modified> element for Atom.
 This method returns the current value when the $text is not defined.
 See also the DATE/TIME FORMATS section.
 
 =head2  $item->category( $text );
 
-This method sets/gets the value of the item's <category> element for RSS/RDF.
+This method sets/gets the item's <category> value for RSS/RDF.
 This method is ignored for Atom.
 This method returns the current value when the $text is not defined.
 
 =head2  $item->author( $text );
 
-This method sets/gets the value of the item's <author> element for RSS,
-<creator> element for RDF, or <author><name> element for Atom.
+This method sets/gets the item's <author> value for RSS,
+<creator> value for RDF, or <author><name> value for Atom.
 This method returns the current value when the $text is not defined.
 
 =head2  $item->guid( $guid, isPermaLink => $bool );
 
-This method sets/gets the value of the item's <guid> element for RSS 
-or <id> element for Atom.
+This method sets/gets the item's <guid> value for RSS
+or <id> value for Atom.
 This method is ignored for RDF.
 The second argument is optional.
 This method returns the current value when the $guid is not defined.
 
-=head2  $item->media_title( $text );
+=head2  $item->set( $key => $value, ... );
 
-This method sets/gets the value of the item's <media:title> element for RSS.
-This method is ignored for RDF/Atom.
-This method returns the current value when the $text is not defined.
+This method sets some node values or attributes.
+See also the next section: GENERAL SET/GET
 
-=head2  $item->media_text( $html, type => "html" );
+=head2  $value = $item->get( $key );
 
-This method sets/gets the value of the item's <media:text> element for RSS.
-This method is ignored for RDF/Atom.
-The second argument is optional.
-This method returns the current value when the $html is not defined.
+This method returns the node value or attribute.
+See also the next section: GENERAL SET/GET
 
-=head2  $item->media_content( $url, type => $t, height => $h, width => $w );
+=head2  $link = $item->link();
 
-This method sets/gets the value of the item's <media:content> element for RSS.
-This method is ignored for RDF/Atom.
-The second argument and rests are optional.
-This method returns the current value when the $url is not defined.
+This method returns the item's <link> value.
 
-=head2  $item->media_thumbnail( $url, height => $h, width => $w );
+=head1  GENERAL SET/GET
 
-This method sets/gets the value of the item's <media:thumbnail> element for RSS.
-This method is ignored for RDF/Atom.
-The second argument and rests are optional.
-This method returns the current value when the $url is not defined.
+XML::FeedPP understands only <rdf:*>, <dc:*> modules
+and RSS/RDF/ATOM's default namespaces.
+There are NO native methods for any other external modules,
+such as <media:*>.
+But set()/get() methods are available to get/set the value of
+any elements or attributes for these modules.
 
-=head2  $item->media_credit( $credit, rold => $role );
+=head2  $item->set( 'module:name' => $value );
 
-This method sets/gets the value of the item's <media:credit> element for RSS.
-This method is ignored for RDF/Atom.
-The second argument is optional.
-This method returns the current value when the $credit is not defined.
+This code sets the value of the child node:
+<item><module:name>$value
 
-=head2  $item->media_category( $category, scheme => $scheme );
+=head2  $item->set( 'module:name@attr' => $value );
 
-This method sets/gets the value of the item's <media:category> element for RSS.
-This method is ignored for RDF/Atom.
-The second argument is optional.
-This method returns the current value when the $category is not defined.
+This code sets the value of the child node's attribute:
+<item><module:name attr="$value">
+
+=head2  $item->set( '@attr' => $value );
+
+This code sets the value of the item's attribute:
+<item attr="$value">
+
+=head2  $item->set( 'hoge/pomu@hare' => $value );
+
+This code sets the value of the child node's child node's attribute:
+<item><hoge><pomu attr="$value">
 
 =head1  DATE/TIME FORMATS
 
@@ -259,7 +284,7 @@ You know, this is the native format of Perl's time() function.
 
 =head1 MODULE DEPENDENCIES
 
-XML::FeedPP module requires only XML::TreePP module, 
+XML::FeedPP module requires only XML::TreePP module,
 which is a pure Perl implementation as well.
 LWP::UserAgent module is also required to download a file from remote web server.
 Jcode module is required to convert Japanese encodings on Perl 5.006 and 5.6.1.
@@ -272,30 +297,24 @@ http://www.kawa.net/works/perl/feedpp/feedpp-e.html
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2006 Yusuke Kawasaki.  All rights reserved.  This program 
+Copyright (c) 2006 Yusuke Kawasaki.  All rights reserved.  This program
 is free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.
 
 =cut
 # ----------------------------------------------------------------
-    my $RSS_VERSION = "2.0";
-    my $RDF_VERSION = "2.0";
-    my $ATOM_VERSION = "0.3";
-    my $TREEPP_OPTIONS = {
-        force_array => [qw( item rdf:li entry )],
-        last_out    => [qw( item items entry )],
-    };
+    my $RSS_VERSION = '2.0';
+    my $RDF_VERSION = '2.0';
+    my $ATOM_VERSION = '0.3';
+    my $XMLNS_RDF  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+    my $XMLNS_RSS  = 'http://purl.org/rss/1.0/';
+    my $XMLNS_DC   = 'http://purl.org/dc/elements/1.1/';
+    my $XMLNS_ATOM = 'http://purl.org/atom/ns#';
+    my $XMLNS_NOCOPY = [qw( xmlns xmlns:rdf xmlns:dc xmlns:atom )];
 # ----------------------------------------------------------------
-    $XMLNS = {
-        "rdf"       =>  "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-        "rss"       =>  "http://purl.org/rss/1.0/",
-        "syn"       =>  "http://purl.org/rss/1.0/modules/syndication/",
-        "sy"        =>  "http://purl.org/rss/1.0/modules/syndication/",
-        "content"   =>  "http://purl.org/rss/1.0/modules/content/",
-        "dc"        =>  "http://purl.org/dc/elements/1.1/",
-        "admin"     =>  "http://webns.net/mvcb/",
-        "atom"      =>  "http://purl.org/atom/ns#",
-        "media"     =>  "http://search.yahoo.com/mrss",
+    my $TREEPP_OPTIONS = {
+        force_array => [qw( item rdf:li dc:subject entry )],
+        last_out    => [qw( item items entry -width -height )],
     };
 # ----------------------------------------------------------------
 sub new {
@@ -307,7 +326,7 @@ sub new {
     $self->load( $source );
     if ( exists $self->{rss} ) {
         $self->init_rss();
-    } elsif ( exists $self->{"rdf:RDF"} ) {
+    } elsif ( exists $self->{'rdf:RDF'} ) {
         $self->init_rdf();
     } elsif ( exists $self->{feed} ) {
         $self->init_atom();
@@ -345,68 +364,97 @@ sub load {
     $self;
 }
 # ----------------------------------------------------------------
+sub to_string {
+    my $self = shift;
+    my $encode = shift;
+    my $tpp = XML::TreePP->new( output_encoding => $encode, %$TREEPP_OPTIONS );
+    $tpp->write( $self, $encode );
+}
+# ----------------------------------------------------------------
+sub to_file {
+    my $self = shift;
+    my $file = shift;
+    my $encode = shift;
+    my $tpp = XML::TreePP->new( output_encoding => $encode, %$TREEPP_OPTIONS );
+    $tpp->writefile( $file, $self, $encode );
+}
+# ----------------------------------------------------------------
 sub merge {
     my $self = shift;
     my $source = shift;
-    my $tree = XML::FeedPP->new( $source );
-    $self->merge_tree( $tree );
-}
-# ----------------------------------------------------------------
-sub merge_tree {
-    my $self = shift;
-    my $tree = shift;
-#   warn "[merge_tree] ",(ref $self),"=",(ref $tree),"\n";
-    if ( ref $self eq ref $tree ) {
-        $self->merge_channel( $tree );
-        $self->merge_item( $tree );
+    my $target = XML::FeedPP->new( $source );
+
+    if ( ref $self eq ref $target ) {
+        $self->merge_native_channel( $target );
+        $self->merge_native_items( $target );
     } else {
-        $self->merge_common( $tree );
+        $self->merge_common_channel( $target );
+        $self->merge_common_items( $target );
     }
     undef;
 }
 # ----------------------------------------------------------------
-sub merge_item {
+sub merge_native_items {
     my $self = shift;
-    my $tree = shift;
-    # print "[merge_item]\n";
+    my $target = shift;
     my $map1 = { map {$_->link()=>$_} $self->get_item() };
-    foreach my $item2 ( $tree->get_item ) {
+    foreach my $item2 ( $target->get_item ) {
         my $link2 = $item2->link();
         my $item1 = $map1->{$link2} || $self->add_item( $link2 );
         XML::FeedPP::Util::merge_hash( $item1, $item2 );
     }
 }
 # ----------------------------------------------------------------
-sub merge_common {
+sub merge_common_channel {
     my $self = shift;
-    my $tree = shift;
-#   warn "[merge_common] $self $tree\n";
+    my $target = shift;
 
     my $title1 = $self->title();
-    my $title2 = $tree->title();
+    my $title2 = $target->title();
     $self->title( $title2 ) if ( ! defined $title1 && defined $title2 );
 
     my $description1 = $self->description();
-    my $description2 = $tree->description();
+    my $description2 = $target->description();
     $self->description( $description2 ) if ( ! defined $description1 && defined $description2 );
 
     my $link1 = $self->link();
-    my $link2 = $tree->link();
+    my $link2 = $target->link();
     $self->link( $link2 ) if ( ! defined $link1 && defined $link2 );
 
     my $language1 = $self->language();
-    my $language2 = $tree->language();
+    my $language2 = $target->language();
     $self->language( $language2 ) if ( ! defined $language1 && defined $language2 );
 
     my $copyright1 = $self->copyright();
-    my $copyright2 = $tree->copyright();
+    my $copyright2 = $target->copyright();
     $self->copyright( $copyright2 ) if ( ! defined $copyright1 && defined $copyright2 );
 
     my $pubDate1 = $self->pubDate();
-    my $pubDate2 = $tree->pubDate();
+    my $pubDate2 = $target->pubDate();
     $self->pubDate( $pubDate2 ) if ( ! defined $pubDate1 && defined $pubDate2 );
 
-    foreach my $item2 ( $tree->get_item() ) {
+    my @image1 = $self->image();
+    my @image2 = $target->image();
+    $self->image( @image2 ) if ( ! defined $image1[0] && defined $image2[0] );
+
+    my @xmlns1 = $self->xmlns();
+    my @xmlns2 = $target->xmlns();
+    my $xmlchk = { map {$_=>1} @xmlns1, @$XMLNS_NOCOPY };
+    foreach my $ns ( @xmlns2 ) {
+        next if exists $xmlchk->{$ns};
+        $self->xmlns( $ns, $target->xmlns($ns) );
+    }
+
+    $self->merge_module_nodes( $self->docroot, $target->docroot );
+
+    $self;
+}
+# ----------------------------------------------------------------
+sub merge_common_items {
+    my $self = shift;
+    my $target = shift;
+
+    foreach my $item2 ( $target->get_item() ) {
         my $link2 = $item2->link() or return;
         my $item1 = $self->add_item( $link2 );
 
@@ -427,23 +475,43 @@ sub merge_common {
 
         my $pubDate2 = $item2->pubDate();
         $item1->pubDate( $pubDate2 ) if defined $pubDate2;
+
+        $self->merge_module_nodes( $item1, $item2 );
     }
     $self;
 }
 # ----------------------------------------------------------------
-sub to_string {
+sub merge_module_nodes {
     my $self = shift;
-    my $encode = shift;
-    my $tpp = XML::TreePP->new( output_encoding => $encode, %$TREEPP_OPTIONS );
-    $tpp->write( $self, $encode );
+    my $item1 = shift;
+    my $item2 = shift;
+    foreach my $key ( grep {/:/} keys %$item2 ) {
+        next if ( $key =~ /^-?(dc|rdf|xmlns):/ );
+        # deep copy would be more better
+        $item1->{$key} = $item2->{$key};
+    }
 }
 # ----------------------------------------------------------------
-sub to_file {
+sub xmlns {
     my $self = shift;
-    my $file = shift;
-    my $encode = shift;
-    my $tpp = XML::TreePP->new( output_encoding => $encode, %$TREEPP_OPTIONS );
-    $tpp->writefile( $file, $self, $encode );
+    my $ns = shift;
+    my $url = shift;
+    my $root = $self->docroot;
+    if ( ! defined $ns ) {
+        my $list = [ grep {/^-xmlns(:\S|$)/} keys %$root ];
+        return map {(/^-(.*)$/)[0]} @$list;
+    } elsif ( ! defined $url ) {
+        return undef unless exists $root->{'-'.$ns};
+        return $root->{'-'.$ns};
+    } else {
+        $root->{'-'.$ns} = $url;
+    }
+}
+# ----------------------------------------------------------------
+sub get_xmlns {
+    my $self = shift;
+    my $ns = shift;
+    $self->{feed}->{'-'.$ns} if exists $self->{feed}->{'-'.$ns};
 }
 # ----------------------------------------------------------------
 sub init_rss {
@@ -451,11 +519,10 @@ sub init_rss {
     XML::FeedPP::RSS->feed_bless( $self );
 
     $self->{rss} ||= {};
-    $self->{rss}->{"-version"} ||= $RSS_VERSION;
-    $self->{rss}->{"-xmlns:media"} ||= $XML::FeedPP::XMLNS->{media};
+    $self->{rss}->{'-version'} ||= $RSS_VERSION;
 
     $self->{rss}->{channel} ||= XML::FeedPP::Element->new();
-    XML::FeedPP::Element->elem_bless( $self->{rss}->{channel} );
+    XML::FeedPP::Element->ref_bless( $self->{rss}->{channel} );
 
     $self->{rss}->{channel}->{item} ||= [];
     if ( UNIVERSAL::isa( $self->{rss}->{channel}->{item}, "HASH" )) {
@@ -463,7 +530,7 @@ sub init_rss {
         $self->{rss}->{channel}->{item} = [ $self->{rss}->{channel}->{item} ];
     }
     foreach my $item ( @{$self->{rss}->{channel}->{item}} ) {
-        XML::FeedPP::RSS::Item->elem_bless( $item );
+        XML::FeedPP::RSS::Item->ref_bless( $item );
     }
 
     $self;
@@ -473,29 +540,29 @@ sub init_rdf {
     my $self = shift or return;
     XML::FeedPP::RDF->feed_bless( $self );
 
-    $self->{"rdf:RDF"} ||= {};
-    $self->{"rdf:RDF"}->{"-xmlns"} ||= $XML::FeedPP::XMLNS->{rss};
-    $self->{"rdf:RDF"}->{"-xmlns:rdf"} ||= $XML::FeedPP::XMLNS->{rdf};
-    $self->{"rdf:RDF"}->{"-xmlns:dc"}  ||= $XML::FeedPP::XMLNS->{dc};
+    $self->{'rdf:RDF'} ||= {};
+    $self->xmlns( "xmlns"     => $XMLNS_RSS );
+    $self->xmlns( "xmlns:rdf" => $XMLNS_RDF );
+    $self->xmlns( "xmlns:dc"  => $XMLNS_DC  );
 
-    $self->{"rdf:RDF"}->{channel} ||= XML::FeedPP::Element->new();
-    XML::FeedPP::Element->elem_bless( $self->{"rdf:RDF"}->{channel} );
+    $self->{'rdf:RDF'}->{channel} ||= XML::FeedPP::Element->new();
+    XML::FeedPP::Element->ref_bless( $self->{'rdf:RDF'}->{channel} );
 
-    $self->{"rdf:RDF"}->{channel}->{items} ||= {};
-    $self->{"rdf:RDF"}->{channel}->{items}->{"rdf:Seq"} ||= {};
+    $self->{'rdf:RDF'}->{channel}->{items} ||= {};
+    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'} ||= {};
 
-    my $rdfseq = $self->{"rdf:RDF"}->{channel}->{items}->{"rdf:Seq"};
-    if ( exists $rdfseq->{"rdf:li"} && 
-        UNIVERSAL::isa( $rdfseq->{"rdf:li"}, "HASH" )) {
-        $rdfseq->{"rdf:li"} = [ $rdfseq->{"rdf:li"} ];
+    my $rdfseq = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'};
+    $rdfseq->{'rdf:li'} ||= [];
+    if ( UNIVERSAL::isa( $rdfseq->{'rdf:li'}, "HASH" )) {
+        $rdfseq->{'rdf:li'} = [ $rdfseq->{'rdf:li'} ];
     }
-    $self->{"rdf:RDF"}->{item} ||= [];
-    if ( UNIVERSAL::isa( $self->{"rdf:RDF"}->{item}, "HASH" )) {
-        # only one item
-        $self->{"rdf:RDF"}->{item} = [ $self->{"rdf:RDF"}->{item} ];
+    $self->{'rdf:RDF'}->{item} ||= [];
+    if ( UNIVERSAL::isa( $self->{'rdf:RDF'}->{item}, "HASH" )) {
+        # force array when only one item exist
+        $self->{'rdf:RDF'}->{item} = [ $self->{'rdf:RDF'}->{item} ];
     }
-    foreach my $item ( @{$self->{"rdf:RDF"}->{item}} ) {
-        XML::FeedPP::RDF::Item->elem_bless( $item );
+    foreach my $item ( @{$self->{'rdf:RDF'}->{item}} ) {
+        XML::FeedPP::RDF::Item->ref_bless( $item );
     }
 
     $self;
@@ -506,9 +573,9 @@ sub init_atom {
     XML::FeedPP::Atom->feed_bless( $self );
 
     $self->{feed} ||= XML::FeedPP::Element->new();
-    XML::FeedPP::Element->elem_bless( $self->{feed} );
+    XML::FeedPP::Element->ref_bless( $self->{feed} );
 
-    $self->{feed}->{"-xmlns"} ||= $XML::FeedPP::XMLNS->{atom};
+    $self->xmlns( "xmlns"   => $XMLNS_ATOM );
 
     $self->{feed}->{entry} ||= [];
     if ( UNIVERSAL::isa( $self->{feed}->{entry}, "HASH" )) {
@@ -516,7 +583,7 @@ sub init_atom {
         $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
     }
     foreach my $item ( @{$self->{feed}->{entry}} ) {
-        XML::FeedPP::Atom::Entry->elem_bless( $item );
+        XML::FeedPP::Atom::Entry->ref_bless( $item );
     }
 
     $self;
@@ -541,29 +608,20 @@ sub new {
     $self;
 }
 # ----------------------------------------------------------------
-sub merge_channel {
+sub merge_native_channel {
     my $self = shift;
     my $tree = shift;
 
-    XML::FeedPP::Util::merge_hash( $self->{rss}, 
+    XML::FeedPP::Util::merge_hash( $self->{rss},
         $tree->{rss}, qw( channel ) );
-    XML::FeedPP::Util::merge_hash( $self->{rss}->{channel}, 
+    XML::FeedPP::Util::merge_hash( $self->{rss}->{channel},
         $tree->{rss}->{channel}, qw( item ) );
-}
-# ----------------------------------------------------------------
-sub add_xmlns {
-    my $self = shift;
-    my $ns = shift;
-    my $url = shift;
-    my $short = $ns;
-    $short =~ s/^xmlns://;
-    $url ||= $XML::FeedPP::XMLNS->{$short};
-    $self->{rss}->{"-".$ns} = $url;
 }
 # ----------------------------------------------------------------
 sub add_item {
     my $self = shift;
     my $link = shift;
+    Carp::croak "add_item needs a argument.\n" unless defined $link;
     my $item = XML::FeedPP::RSS::Item->new();
     $item->link( $link );
     push( @{$self->{rss}->{channel}->{item}}, $item );
@@ -583,72 +641,74 @@ sub get_item {
     }
 }
 # ----------------------------------------------------------------
-sub title       { shift->{rss}->{channel}->child_value( "title", @_ ); }
-sub description { shift->{rss}->{channel}->child_value( "description", @_ ); }
-sub link        { shift->{rss}->{channel}->child_value( "link", @_ ); }
-sub language    { shift->{rss}->{channel}->child_value( "language", @_ ); }
-sub copyright   { shift->{rss}->{channel}->child_value( "copyright", @_ ); }
+sub docroot { shift->{rss}; }
+sub channel { shift->{rss}->{channel}; }
+sub set { shift->{rss}->{channel}->set( @_ ); }
+sub get { shift->{rss}->{channel}->get( @_ ); }
 # ----------------------------------------------------------------
-sub pubDate     {
+sub title { shift->{rss}->{channel}->get_or_set( "title", @_ ); }
+sub description { shift->{rss}->{channel}->get_or_set( "description", @_ ); }
+sub link { shift->{rss}->{channel}->get_or_set( "link", @_ ); }
+sub language { shift->{rss}->{channel}->get_or_set( "language", @_ ); }
+sub copyright { shift->{rss}->{channel}->get_or_set( "copyright", @_ ); }
+# ----------------------------------------------------------------
+sub pubDate {
     my $self = shift;
     my $date = shift;
     if ( ! defined $date ) {
-        $date = $self->{rss}->{channel}->get_child_value( "pubDate" );
+        $date = $self->{rss}->{channel}->get_value( "pubDate" );
         $date = XML::FeedPP::Util::rfc1123_to_w3cdtf( $date );
         return $date;
     }
     $date = XML::FeedPP::Util::get_rfc1123( $date );
-    $self->{rss}->{channel}->set_child_value( "pubDate", $date );
+    $self->{rss}->{channel}->set_value( "pubDate", $date );
+}
+# ----------------------------------------------------------------
+sub image {
+    my $self = shift;
+    my $url = shift;
+    if ( defined $url ) {
+        my( $title, $link, $desc, $width, $height ) = @_;
+        $self->{rss}->{channel}->{image} ||= {};
+        my $image = $self->{rss}->{channel}->{image};
+        $image->{url}         = $url;
+        $image->{title}       = $title  if defined $title;
+        $image->{link}        = $link   if defined $link;
+        $image->{description} = $desc if defined $desc;
+        $image->{width}       = $width  if defined $width;
+        $image->{height}      = $height if defined $height;
+    } elsif ( exists $self->{rss}->{channel}->{image} ) {
+        my $image = $self->{rss}->{channel}->{image};
+        my $array = [];
+        foreach my $key (qw( url title link description width height )) {
+            push( @$array, exists $image->{$key} ? $image->{$key} : undef );
+        }
+        return wantarray ? @$array : shift @$array;
+    }
+    undef;
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RSS::Item;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP::Element" );
 # ----------------------------------------------------------------
-sub title       { shift->child_value( "title", @_ ); }
-sub description { shift->child_value( "description", @_ ); }
-sub link        { shift->child_value( "link", @_ ); }
-sub category    { shift->child_value( "category", @_ ); }
-sub author      { shift->child_value( "author", @_ ); }
-sub guid        { shift->child_value( "guid", @_ ); }
+sub title { shift->get_or_set( "title", @_ ); }
+sub description { shift->get_or_set( "description", @_ ); }
+sub link { shift->get_or_set( "link", @_ ); }
+sub category { shift->get_or_set( "category", @_ ); }
+sub author { shift->get_or_set( "author", @_ ); }
+sub guid { shift->get_or_set( "guid", @_ ); }
 # ----------------------------------------------------------------
-sub pubDate     {
+sub pubDate {
     my $self = shift;
     my $date = shift;
     if ( ! defined $date ) {
-        $date = $self->get_child_value( "pubDate" );
+        $date = $self->get_value( "pubDate" );
         $date = XML::FeedPP::Util::rfc1123_to_w3cdtf( $date );
         return $date;
     }
     $date = XML::FeedPP::Util::get_rfc1123( $date );
-    $self->set_child_value( "pubDate", $date );
-}
-# ----------------------------------------------------------------
-sub media_content {
-    my $self = shift;
-    return $self->get_child_attr( "media:content", "url" ) unless scalar @_;
-    $self->set_child_value( "media:content", undef, url => @_ );
-}
-sub media_title {
-    my $self = shift;
-    $self->child_value( "media:title", @_ );
-}
-sub media_text  {
-    my $self = shift;
-    $self->child_value( "media:text", @_ );
-}
-sub media_thumbnail {
-    my $self = shift;
-    return $self->get_child_attr( "media:thumbnail", "url" ) unless scalar @_;
-    $self->set_child_value( "media:thumbnail", undef, url => @_ );
-}
-sub media_credit    {
-    my $self = shift;
-    $self->child_value( "media:credit", @_ );
-}
-sub media_category  {
-    my $self = shift;
-    $self->child_value( "media:category", @_ );
+    $self->set_value( "pubDate", $date );
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RDF;
@@ -662,7 +722,7 @@ sub new {
     bless $self, $package;
     if ( defined $source ) {
         $self->load( $source );
-        if ( ! ref $self || ! ref $self->{"rdf:RDF"} ) {
+        if ( ! ref $self || ! ref $self->{'rdf:RDF'} ) {
             Carp::croak "Invalid RDF format: $source";
         }
     }
@@ -670,24 +730,14 @@ sub new {
     $self;
 }
 # ----------------------------------------------------------------
-sub merge_channel {
+sub merge_native_channel {
     my $self = shift;
     my $tree = shift;
 
-    XML::FeedPP::Util::merge_hash( $self->{"rdf:RDF"}, 
-        $tree->{"rdf:RDF"}, qw( channel item ) );
-    XML::FeedPP::Util::merge_hash( $self->{"rdf:RDF"}->{channel}, 
-        $tree->{"rdf:RDF"}->{channel}, qw( items ) );
-}
-# ----------------------------------------------------------------
-sub add_xmlns {
-    my $self = shift;
-    my $ns = shift;
-    my $url = shift;
-    my $short = $ns;
-    $short =~ s/^xmlns://;
-    $url ||= $XML::FeedPP::XMLNS->{$short};
-    $self->{"rdf:RDF"}->{"-".$ns} = $url;
+    XML::FeedPP::Util::merge_hash( $self->{'rdf:RDF'},
+        $tree->{'rdf:RDF'}, qw( channel item ) );
+    XML::FeedPP::Util::merge_hash( $self->{'rdf:RDF'}->{channel},
+        $tree->{'rdf:RDF'}->{channel}, qw( items ) );
 }
 # ----------------------------------------------------------------
 sub add_item {
@@ -695,13 +745,13 @@ sub add_item {
     my $link = shift;
 
     my $rdfli = XML::FeedPP::Element->new();
-    $rdfli->set_elem_attr( "rdf:resource" => $link );
-    $self->{"rdf:RDF"}->{channel}->{items}->{"rdf:Seq"}->{"rdf:li"} ||= [];
-    push( @{$self->{"rdf:RDF"}->{channel}->{items}->{"rdf:Seq"}->{"rdf:li"}}, $rdfli );
+    $rdfli->{'-rdf:resource'} = $link;
+    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} ||= [];
+    push( @{$self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'}}, $rdfli );
 
     my $item = XML::FeedPP::RDF::Item->new( @_ );
     $item->link( $link );
-    push( @{$self->{"rdf:RDF"}->{item}}, $item );
+    push( @{$self->{'rdf:RDF'}->{item}}, $item );
 
     $item;
 }
@@ -710,61 +760,82 @@ sub add_item {
 sub get_item {
     my $self = shift;
     my $num = shift;
-    $self->{"rdf:RDF"}->{item} ||= [];
+    $self->{'rdf:RDF'}->{item} ||= [];
     if ( defined $num ) {
-        return $self->{"rdf:RDF"}->{item}->[$num];
+        return $self->{'rdf:RDF'}->{item}->[$num];
     } elsif ( wantarray ) {
-        return @{$self->{"rdf:RDF"}->{item}};
+        return @{$self->{'rdf:RDF'}->{item}};
     } else {
-        return scalar @{$self->{"rdf:RDF"}->{item}};
+        return scalar @{$self->{'rdf:RDF'}->{item}};
     }
 }
 # ----------------------------------------------------------------
-sub title       { shift->{"rdf:RDF"}->{channel}->child_value( "title", @_ ); }
-sub description { shift->{"rdf:RDF"}->{channel}->child_value( "description", @_ ); }
-sub link        { shift->{"rdf:RDF"}->{channel}->child_value( "link", @_ ); }
-sub language    { shift->{"rdf:RDF"}->{channel}->child_value( "dc:language", @_ ); }
-sub copyright   { shift->{"rdf:RDF"}->{channel}->child_value( "dc:rights", @_ ); }
+sub docroot { shift->{'rdf:RDF'}; }
+sub channel { shift->{'rdf:RDF'}->{channel}; }
+sub set { shift->{'rdf:RDF'}->{channel}->set( @_ ); }
+sub get { shift->{'rdf:RDF'}->{channel}->get( @_ ); }
 # ----------------------------------------------------------------
-sub pubDate     {
+sub title { shift->{'rdf:RDF'}->{channel}->get_or_set( "title", @_ ); }
+sub description { shift->{'rdf:RDF'}->{channel}->get_or_set( "description", @_ ); }
+sub link { shift->{'rdf:RDF'}->{channel}->get_or_set( "link", @_ ); }
+sub language { shift->{'rdf:RDF'}->{channel}->get_or_set( "dc:language", @_ ); }
+sub copyright { shift->{'rdf:RDF'}->{channel}->get_or_set( "dc:rights", @_ ); }
+# ----------------------------------------------------------------
+sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->{"rdf:RDF"}->{channel}->get_child_value( "dc:date" ) unless defined $date;
+    return $self->{'rdf:RDF'}->{channel}->get_value( "dc:date" ) unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
-    $self->{"rdf:RDF"}->{channel}->set_child_value( "dc:date", $date );
+    $self->{'rdf:RDF'}->{channel}->set_value( "dc:date", $date );
+}
+# ----------------------------------------------------------------
+sub image {
+    my $self = shift;
+    my $url = shift;
+    if ( defined $url ) {
+        my( $title, $link ) = @_;
+        $self->{'rdf:RDF'}->{image} ||= {};
+        $self->{'rdf:RDF'}->{image}->{'-rdf:resource'} = $url;
+        $self->{'rdf:RDF'}->{channel}->{image} ||= {};
+        my $image = $self->{'rdf:RDF'}->{image};
+        $image->{url}         = $url;
+        $image->{title}       = $title  if defined $title;
+        $image->{link}        = $link   if defined $link;
+    } elsif ( exists $self->{'rdf:RDF'}->{image} ) {
+        my $image = $self->{'rdf:RDF'}->{image};
+        my $array = [];
+        foreach my $key (qw( url title link )) {
+            push( @$array, exists $image->{$key} ? $image->{$key} : undef );
+        }
+        return wantarray ? @$array : shift @$array;
+    }
+    undef;
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RDF::Item;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP::Element" );
 # ----------------------------------------------------------------
-sub title       { shift->child_value( "title", @_ ); }
-sub description { shift->child_value( "description", @_ ); }
-sub category    { shift->child_value( "category", @_ ); }
-sub author      { shift->child_value( "creator", @_ ); }
+sub title { shift->get_or_set( "title", @_ ); }
+sub description { shift->get_or_set( "description", @_ ); }
+sub category { shift->get_or_set( "category", @_ ); }
+sub author { shift->get_or_set( "creator", @_ ); }
 # ----------------------------------------------------------------
-sub link        {
+sub link {
     my $self = shift;
     my $link = shift;
-    return $self->get_child_value( "link" ) unless defined $link;
-    $self->set_elem_attr( "rdf:about" => $link );
-    $self->set_child_value( "link", $link, @_ );
+    return $self->get_value( "link" ) unless defined $link;
+    $self->{'-rdf:about'} = $link;
+    $self->set_value( "link", $link, @_ );
 }
-sub pubDate     {
+sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->get_child_value( "dc:date" ) unless defined $date;
+    return $self->get_value( "dc:date" ) unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
-    $self->set_child_value( "dc:date", $date );
+    $self->set_value( "dc:date", $date );
 }
-# ----------------------------------------------------------------
-sub guid            { undef; }          # not supported elements
-sub media_content   { undef; }
-sub media_title     { undef; }
-sub media_text      { undef; }          # <content:encoded>?
-sub media_thumbnail { undef; }
-sub media_credit    { undef; }
-sub media_category  { undef; }
+sub guid { undef; }          # this element is NOT supported for RDF
 # ----------------------------------------------------------------
     package XML::FeedPP::Atom;
     use vars qw( @ISA );
@@ -785,21 +856,11 @@ sub new {
     $self;
 }
 # ----------------------------------------------------------------
-sub merge_channel {
+sub merge_native_channel {
     my $self = shift;
     my $tree = shift;
 
     XML::FeedPP::Util::merge_hash( $self->{feed}, $tree->{feed}, qw( entry ) );
-}
-# ----------------------------------------------------------------
-sub add_xmlns {
-    my $self = shift;
-    my $ns = shift;
-    my $url = shift;
-    my $short = $ns;
-    $short =~ s/^xmlns://;
-    $url ||= $XML::FeedPP::XMLNS->{$short};
-    $self->{feed}->{"-".$ns} = $url;
 }
 # ----------------------------------------------------------------
 sub add_item {
@@ -826,107 +887,113 @@ sub get_item {
     }
 }
 # ----------------------------------------------------------------
-sub title       {
+sub docroot { shift->{feed}; }
+sub channel { shift->{feed}; }
+sub set { shift->{feed}->set( @_ ); }
+sub get { shift->{feed}->get( @_ ); }
+# ----------------------------------------------------------------
+sub title {
     my $self = shift;
     my $title = shift;
-    return $self->{feed}->get_child_value( "title" ) unless defined $title;
-    $self->{feed}->set_child_value( "title" => $title, type => "text/plain" );
+    return $self->{feed}->get_value( "title" ) unless defined $title;
+    $self->{feed}->set_value( "title" => $title, type => "text/plain" );
 }
 sub description {
     my $self = shift;
     my $desc = shift;
-    return $self->{feed}->get_child_value( "tagline" ) unless defined $desc;
-    $self->{feed}->set_child_value( "tagline" => $desc, type => "text/html", mode => "escaped" );
+    return $self->{feed}->get_value( "tagline" ) unless defined $desc;
+    $self->{feed}->set_value( "tagline" => $desc, type => "text/html", mode => "escaped" );
 }
-sub link        {
+sub link {
     my $self = shift;
     my $link = shift;
 
     my $node = $self->{feed}->{link} || [];
     $node = [ $node ] if UNIVERSAL::isa( $node, "HASH" );
-    my $html = ( grep { ! ref $_ || ! exists $_->{"-type"} || 
-                        $_->{"-type"} =~ m#^text/(x-)?html#i } @$node )[0];
+    my $html = ( grep { ! ref $_ || ! exists $_->{'-type'} ||
+                        $_->{'-type'} =~ m#^text/(x-)?html#i } @$node )[0];
 
     if ( defined $link ) {
         if ( ref $html ) {
-            $html->{"-href"} = $link;
+            $html->{'-href'} = $link;
         } else{
-            $self->{feed}->set_child_attr( "link", 
-                href    =>  $link, 
-                type    =>  "text/html", 
+            $self->{feed}->set_attr( "link",
+                href    =>  $link,
+                type    =>  "text/html",
                 rel     =>  "alternative" );
         }
     } elsif ( ref $html ) {
-        return $html->{"-href"};
+        return $html->{'-href'};
     } else {
         return $html;
     }
     undef;
 }
-sub pubDate     {
+sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->{feed}->get_child_value( "modified" ) unless defined $date;
+    return $self->{feed}->get_value( "modified" ) unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
-    $self->{feed}->child_value( "modified", $date );
+    $self->{feed}->get_or_set( "modified", $date );
 }
-sub language    {
+sub language {
     my $self = shift;
     my $lang = shift;
-    return $self->{feed}->get_elem_attr( "xml:lang" ) unless defined $lang;
-    $self->{feed}->set_elem_attr( "xml:lang" => $lang );
+    return $self->{feed}->{'-xml:lang'} unless defined $lang;
+    $self->{feed}->{'-xml:lang'} = $lang;
 }
-sub copyright   { 
-    shift->{feed}->child_value( "copyright" => @_ );
+sub copyright {
+    shift->{feed}->get_or_set( "copyright" => @_ );
 }
+sub image { undef; }          # this element is NOT supported for Atom
 # ----------------------------------------------------------------
     package XML::FeedPP::Atom::Entry;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP::Element" );
 # ----------------------------------------------------------------
-sub title       {
+sub title {
     my $self = shift;
     my $title = shift;
-    return $self->get_child_value( "title" ) unless defined $title;
-    $self->set_child_value( "title" => $title, type => "text/plain" );
+    return $self->get_value( "title" ) unless defined $title;
+    $self->set_value( "title" => $title, type => "text/plain" );
 }
 sub description {
     my $self = shift;
     my $desc = shift;
-    return $self->get_child_value( "content" ) unless defined $desc;
-    $self->set_child_value( "content" => $desc, type => "text/html", mode => "escaped" );
+    return $self->get_value( "content" ) unless defined $desc;
+    $self->set_value( "content" => $desc, type => "text/html", mode => "escaped" );
 }
-sub link        {
+sub link {
     my $self = shift;
     my $link = shift;
     my $node = $self->{link} || [];
     $node = [ $node ] if UNIVERSAL::isa( $node, "HASH" );
-    my $html = ( grep { ! ref $_ || ! exists $_->{"-type"} || 
-                        $_->{"-type"} =~ m#^text/(x-)?html#i} @$node )[0];
+    my $html = ( grep { ! ref $_ || ! exists $_->{'-type'} ||
+                        $_->{'-type'} =~ m#^text/(x-)?html#i} @$node )[0];
 
     if ( defined $link ) {
         if ( ref $html ) {
-            $html->{"-href"} = $link;
+            $html->{'-href'} = $link;
         } else{
-            $self->set_child_attr( "link", 
-                href    =>  $link, 
-                type    =>  "text/html", 
+            $self->set_attr( "link",
+                href    =>  $link,
+                type    =>  "text/html",
                 rel     =>  "alternative" );
         }
     } elsif ( ref $html ) {
-        return $html->{"-href"};
+        return $html->{'-href'};
     } else {
         return $html;
     }
 }
-sub pubDate     {
+sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->get_child_value( "created" ) unless defined $date;
+    return $self->get_value( "created" ) unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
-    $self->set_child_value( "created", $date );
+    $self->set_value( "created", $date );
 }
-sub author      {
+sub author {
     my $self = shift;
     my $name = shift;
     unless ( defined $name ) {
@@ -936,15 +1003,8 @@ sub author      {
     my $author = ref $name ? $name : { name => $name };
     $self->{author} = $author;
 }
-sub guid        { shift->child_value( "id", @_ ); }
-# ----------------------------------------------------------------
-sub category    { undef; }
-sub media_content   { undef; }
-sub media_title     { undef; }
-sub media_text      { undef; }          # <content:encoded>?
-sub media_thumbnail { undef; }
-sub media_credit    { undef; }
-sub media_category  { undef; }
+sub guid { shift->get_or_set( "id", @_ ); }
+sub category { undef; }          # this element is NOT supported for Atom
 # ----------------------------------------------------------------
     package XML::FeedPP::Element;
 # ----------------------------------------------------------------
@@ -955,63 +1015,121 @@ sub new {
     $self;
 }
 # ----------------------------------------------------------------
-sub elem_bless {
+sub ref_bless {
     my $package = shift;
     my $self = shift;
     bless $self, $package;
     $self;
 }
 # ----------------------------------------------------------------
-sub child_value {
+sub set {
     my $self = shift;
-    my $elem = shift;
-    return scalar @_ 
-        ? $self->set_child_value($elem,@_) 
-        : $self->get_child_value($elem);
+
+    while ( scalar @_ ) {
+        my $key = shift @_;
+        my $val = shift @_;
+        my $node = $self;
+        while ( $key =~ s#^([^/]+)/##s ) {
+            my $child = $1;
+            if ( ref $node->{$child} ) {
+                # ok
+            } elsif ( defined $node->{$child} ) {
+                $node->{$child} = { "#text" => $node->{$child} };
+            } else {
+                $node->{$child} = {};
+            }
+            $node = $node->{$child};
+        }
+        my( $tagname, $attr ) = split( /\@/, $key, 2 );
+        if ( $tagname eq "" && defined $attr ) {
+            $node->{'-'.$attr} = $val;
+        } elsif ( defined $attr ) {
+            if ( ref $node->{$tagname} ) {
+                $node->{$tagname}->{'-'.$attr} = $val;
+            } elsif ( defined $node->{$tagname} ) {
+                $node->{$tagname} = {
+                    "#text"     =>  $node->{$tagname},
+                    '-'.$attr   =>  $val,
+                };
+            } else {
+                $node->{$tagname} = {
+                    '-'.$attr   =>  $val,
+                };
+            }
+        } elsif ( defined $tagname ) {
+            if ( ref $self->{$tagname} ) {
+                $node->{$tagname}->{'#text'} = $val;
+            } else {
+                $node->{$tagname} = $val;
+            }
+        }
+    }
 }
 # ----------------------------------------------------------------
-sub child_attr {
-    my $self = shift;
-    my $elem = shift;
-    return scalar @_ 
-        ? $self->set_child_attr($elem,@_) 
-        : $self->get_child_attr($elem);
-}
-# ----------------------------------------------------------------
-sub elem_attr {
+sub get {
     my $self = shift;
     my $key = shift;
-    return scalar @_ 
-        ? $self->set_elem_attr($key,@_) 
-        : $self->get_elem_attr($key);
+    my $node = $self;
+
+    while ( $key =~ s#^([^/]+)/##s ) {
+        my $child = $1;
+        return undef unless ref $node;
+        return undef unless exists $node->{$child};
+        $node = $node->{$child};
+    }
+    my( $tagname, $attr ) = split( /\@/, $key, 2 );
+    return undef unless exists $node->{$tagname};
+    if ( defined $attr ) {                      # attribute
+        return undef unless ref $node->{$tagname};
+        return undef unless exists $node->{$tagname}->{'-'.$attr};
+        return $node->{$tagname}->{'-'.$attr};
+    } else {                                    # node value
+        return $node->{$tagname} unless ref $node->{$tagname};
+        return $node->{$tagname}->{'#text'};
+    }
 }
 # ----------------------------------------------------------------
-sub set_child_value {
+sub get_or_set {
+    my $self = shift;
+    my $elem = shift;
+    return scalar @_
+        ? $self->set_value($elem,@_)
+        : $self->get_value($elem);
+}
+# ----------------------------------------------------------------
+sub get_value {
+    my $self = shift;
+    my $elem = shift;
+    return undef unless exists $self->{$elem};
+    return $self->{$elem} unless ref $self->{$elem};
+    return $self->{$elem}->{'#text'};
+}
+# ----------------------------------------------------------------
+sub set_value {
     my $self = shift;
     my $elem = shift;
     my $text = shift;
     my $attr = \@_;
     if ( ref $self->{$elem} ) {
-        $self->{$elem}->{"#text"} = $text;
+        $self->{$elem}->{'#text'} = $text;
     } else {
         $self->{$elem} = $text;
     }
-    $self->set_child_attr( $elem, @$attr ) if scalar @$attr;
+    $self->set_attr( $elem, @$attr ) if scalar @$attr;
     undef;
-    }
-# ----------------------------------------------------------------
-sub get_child_value {
-    my $self = shift;
-    my $elem = shift;
-    return undef unless exists $self->{$elem};
-    if ( ref $self->{$elem} ) {
-        return $self->{$elem}->{"#text"};
-    } else {
-        return $self->{$elem};
-    }
 }
 # ----------------------------------------------------------------
-sub set_child_attr {
+sub get_attr {
+    my $self = shift;
+    my $elem = shift;
+    my $key = shift;
+    return undef unless exists $self->{$elem};
+    return undef unless ref $self->{$elem};
+    return undef unless exists $self->{$elem}->{'-'.$key};
+    $self->{$elem}->{'-'.$key};
+}
+# ----------------------------------------------------------------
+sub set_attr {
     my $self = shift;
     my $elem = shift;
     my $attr = \@_;
@@ -1026,41 +1144,12 @@ sub set_child_attr {
         my $key = shift @$attr;
         my $val = shift @$attr;
         if ( defined $val ) {
-            $self->{$elem}->{"-".$key} = $val;
+            $self->{$elem}->{'-'.$key} = $val;
         } else {
-            delete $self->{$elem}->{"-".$key};;
+            delete $self->{$elem}->{'-'.$key};;
         }
     }
     undef;
-}
-# ----------------------------------------------------------------
-sub get_child_attr {
-    my $self = shift;
-    my $elem = shift;
-    my $key = shift;
-    return undef unless exists $self->{$elem};
-    return undef unless ref $self->{$elem};
-    return undef unless exists $self->{$elem}->{"-".$key};
-    $self->{$elem}->{"-".$key};
-}
-# ----------------------------------------------------------------
-sub set_elem_attr {
-    my $self = shift;
-    my $key = shift;
-    my $val = shift;
-    if ( defined $val ) {
-        $self->{"-".$key} = $val;
-    } else {
-        delete $self->{"-".$key};;
-    }
-    undef;
-}
-# ----------------------------------------------------------------
-sub get_elem_attr {
-    my $self = shift;
-    my $key = shift;
-    return undef unless exists $self->{"-".$key};
-    $self->{"-".$key};
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::Util;

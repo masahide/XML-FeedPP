@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------
     use strict;
-    use Test::More tests => 38;
+    use Test::More tests => 32;
     BEGIN { use_ok('XML::FeedPP') };
 # ----------------------------------------------------------------
     my $ftitle = "Title of the site";
@@ -24,14 +24,6 @@
     my $idateB = "2005-12-11T10:09:08-07:00";
     my $iauthor = "Author";
     my $iguid   = "GUID";
-    my $mtitle  = "Media title";
-    my $mtext   = "Media text";
-    my $mcredit = "Media credit";
-    my $mcate   = "Media category";
-    my $mcont   = "http://www.kawa.net/xp/images/mixi-3.jpg";
-    my $mthumb  = "http://www.kawa.net/xp/images/xp-title-256.gif";
-    my $mheight = 640;
-    my $mwidth  = 480;
 # ----------------------------------------------------------------
     my $feed1 = XML::FeedPP::RDF->new();
     $feed1->title( $ftitle );
@@ -52,12 +44,6 @@
     $item1->category( $icate );
     $item1->author( $iauthor, isPermaLink => "false" );
     $item1->guid( $iguid );
-    $item1->media_title( $mtitle );
-    $item1->media_text( $mtext, type => "html" );
-    $item1->media_thumbnail( $mthumb, height => $mheight, width => $mwidth );
-    $item1->media_content( $mcont, type => "image/gif", height => $mheight, width => $mwidth );
-    $item1->media_credit( $mcredit, rold => "photographer" );
-    $item1->media_category( $mcate, scheme => "urn:flickr:tags" );
 # ----------------------------------------------------------------
     my $item2 = $feed1->add_item( $link2 );
     $item2->title( $title2 );
@@ -89,12 +75,6 @@
     is( $item4->category(),         $icate,     "Item->category()" );
     is( $item4->author(),           $iauthor,   "Item->author()" );
     is( $item4->guid(),             undef,      "Item->guid()" );
-    is( $item4->media_title(),      undef,      "Item->media_title()" );
-    is( $item4->media_text(),       undef,      "Item->media_text()" );
-    is( $item4->media_thumbnail(),  undef,      "Item->media_thumbnail()" );
-    is( $item4->media_credit(),     undef,      "Item->media_credit()" );
-    is( $item4->media_category(),   undef,      "Item->media_category()" );
-    is( $item4->media_content(),    undef,      "Item->media_content()" );
 # ----------------------------------------------------------------
     my $source2 = $feed1->to_string();
     is( $source1, $source2, "turn around - rss source." );
@@ -113,12 +93,6 @@
     like( $source2, qr/<category[^>]*>\s*         \Q$icate\E/x,   "<category>" );
     like( $source2, qr/<creator[^>]*>\s*          \Q$iauthor\E/x, "<creator>" );
 #   like( $source2, qr/<guid[^>]*>\s*             \Q$iguid\E/x,   "<guid>" );
-#   like( $source2, qr/<media:title[^>]*>\s*      \Q$mtitle\E/x,  "<media:title>" );
-#   like( $source2, qr/<media:text[^>]*>\s*       \Q$mtext\E/x,   "<media:text>" );
-#   like( $source2, qr/<media:thumbnail[^>]* url="\Q$mthumb\E/x,  "<media:thumbnail>" );
-#   like( $source2, qr/<media:credit[^>]*>\s*     \Q$mcredit\E/x, "<media:credit>" );
-#   like( $source2, qr/<media:category[^>]*>\s*   \Q$mcate\E/x,   "<media:category>" );
-#   like( $source2, qr/<media:content[^>]*\s*url="\Q$mcont\E/x,   "<media:content>" );
 # ----------------------------------------------------------------
 ;1;
 # ----------------------------------------------------------------

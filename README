@@ -1,5 +1,5 @@
 NAME
-    XML::FeedPP -- Parse/write/merge WebFeeds of RSS/RDF/Atom formats.
+    XML::FeedPP -- Parse/write/merge web feeds, RSS/RDF/Atom
 
 SYNOPSIS
     Get a RSS file and parse it.
@@ -34,9 +34,10 @@ SYNOPSIS
         my $atom = $feed->to_string();                      # get Atom source code
 
 DESCRIPTION
-    XML::TreePP module can parses RSS/RDF/Atom files, convert it and
-    generate it. This is a pure Perl implementation and do not requires any
-    other modules expcept for XML::FeedPP.
+    XML::FeedPP module parses a RSS/RDF/Atom file, converts its format,
+    marges another files, and generates a XML file. This module is a pure
+    Perl implementation and do not requires any other modules expcept for
+    XML::FeedPP.
 
 METHODS
   $feed = XML::FreePP->new( 'index.rss' );
@@ -84,36 +85,6 @@ METHODS
     This method generate XML file. The output $encoding is optional and the
     default value is 'UTF-8'.
 
-  $feed->title( $text );
-    This method sets/gets the value of the feed's <title> element. This
-    method returns the current value when the $title is not defined.
-
-  $feed->description( $html );
-    This method sets/gets the value of the feed's <description> element in
-    HTML. This method returns the current value when the $html is not
-    defined.
-
-  $feed->pubDate( $date );
-    This method sets/gets the value of the feed's <pubDate> element for RSS,
-    <dc:date> element for RDF, or <created> element for Atom. This method
-    returns the current value when the $date is not defined. See also the
-    DATE/TIME FORMATS section.
-
-  $feed->copyright( $text );
-    This method sets/gets the value of the feed's <copyright> element for
-    RSS/Atom, or <dc:rights> element for RDF. This method returns the
-    current value when the $text is not defined.
-
-  $feed->link( $url );
-    This method sets/gets the value of the URL of the web site as the feed's
-    <link> element for RSS/RDF/Atom. This method returns the current value
-    when the $url is not defined.
-
-  $feed->language( $lang );
-    This method sets/gets the value of the item's <pubDate> element for RSS,
-    <dc:language> element for RDF, or <feed xml:lang=""> attribute for Atom.
-    This method returns the current value when the $lang is not defined.
-
   $item = $feed->add_item( $url );
     This method creates new item/entry and returns its instance. First
     argument $link is the URL of the new item/entry. RSS's <item> element is
@@ -127,65 +98,110 @@ METHODS
     returns the list of all items on array context or the number of items on
     scalar context.
 
+  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
+    This code sets the XML namespace at the document root of the feed.
+
+  $url = $feed->xmlns( 'xmlns:media' );
+    This code returns the URL of the specified XML namespace.
+
+  @list = $feed->xmlns();
+    This code returns the list of all XML namespace used in the feed.
+
+METHODS FOR CHANNEL/FEED
+  $feed->title( $text );
+    This method sets/gets the feed's <title> value. This method returns the
+    current value when the $title is not defined.
+
+  $feed->description( $html );
+    This method sets/gets the feed's <description> value in HTML. This
+    method returns the current value when the $html is not defined.
+
+  $feed->pubDate( $date );
+    This method sets/gets the feed's <pubDate> value for RSS, <dc:date>
+    value for RDF, or <created> value for Atom. This method returns the
+    current value when the $date is not defined. See also the DATE/TIME
+    FORMATS section.
+
+  $feed->copyright( $text );
+    This method sets/gets the feed's <copyright> value for RSS/Atom, or
+    <dc:rights> element for RDF. This method returns the current value when
+    the $text is not defined.
+
+  $feed->link( $url );
+    This method sets/gets the URL of the web site as the feed's <link> value
+    for RSS/RDF/Atom. This method returns the current value when the $url is
+    not defined.
+
+  $feed->language( $lang );
+    This method sets/gets the feed's <language> value for RSS, <dc:language>
+    element for RDF, or <feed xml:lang=""> attribute for Atom. This method
+    returns the current value when the $lang is not defined.
+
+  $feed->image( $url, $title, $link, $description, $width, $height )
+    This method sets/gets the feed's <image> value and its child nodes for
+    RSS/RDF. This method is ignored for Atom. This method returns the
+    current values as array when any arguments are not defined.
+
+METHODS FOR ITEM/ENTRY
   $item->title( $text );
-    This method sets/gets the value of the item's <title> element. This
-    method returns the current value when the $text is not defined.
+    This method sets/gets the item's <title> value. This method returns the
+    current value when the $text is not defined.
 
   $item->description( $html );
-    This method sets/gets the value of the item's <description> element in
-    HTML. This method returns the current value when the $text is not
-    defined.
-
-  $item->pubDate( $date );
-    This method sets/gets the value of the item's <pubDate> element for RSS,
-    <dc:date> element for RDF, or <modified> element for Atom. This method
-    returns the current value when the $text is not defined. See also the
-    DATE/TIME FORMATS section.
-
-  $item->category( $text );
-    This method sets/gets the value of the item's <category> element for
-    RSS/RDF. This method is ignored for Atom. This method returns the
-    current value when the $text is not defined.
-
-  $item->author( $text );
-    This method sets/gets the value of the item's <author> element for RSS,
-    <creator> element for RDF, or <author><name> element for Atom. This
+    This method sets/gets the item's <description> value in HTML. This
     method returns the current value when the $text is not defined.
 
-  $item->guid( $guid, isPermaLink => $bool );
-    This method sets/gets the value of the item's <guid> element for RSS or
-    <id> element for Atom. This method is ignored for RDF. The second
-    argument is optional. This method returns the current value when the
-    $guid is not defined.
+  $item->pubDate( $date );
+    This method sets/gets the item's <pubDate> value for RSS, <dc:date>
+    element for RDF, or <modified> element for Atom. This method returns the
+    current value when the $text is not defined. See also the DATE/TIME
+    FORMATS section.
 
-  $item->media_title( $text );
-    This method sets/gets the value of the item's <media:title> element for
-    RSS. This method is ignored for RDF/Atom. This method returns the
+  $item->category( $text );
+    This method sets/gets the item's <category> value for RSS/RDF. This
+    method is ignored for Atom. This method returns the current value when
+    the $text is not defined.
+
+  $item->author( $text );
+    This method sets/gets the item's <author> value for RSS, <creator> value
+    for RDF, or <author><name> value for Atom. This method returns the
     current value when the $text is not defined.
 
-  $item->media_text( $html, type => "html" );
-    This method sets/gets the value of the item's <media:text> element for
-    RSS. This method is ignored for RDF/Atom. The second argument is
-    optional. This method returns the current value when the $html is not
-    defined.
+  $item->guid( $guid, isPermaLink => $bool );
+    This method sets/gets the item's <guid> value for RSS or <id> value for
+    Atom. This method is ignored for RDF. The second argument is optional.
+    This method returns the current value when the $guid is not defined.
 
-  $item->media_thumbnail( $url, height => $h, width => $w );
-    This method sets/gets the value of the item's <media:thumbnail> element
-    for RSS. This method is ignored for RDF/Atom. The second argument and
-    rests are optional. This method returns the current value when the $url
-    is not defined.
+  $item->set( $key => $value, ... );
+    This method sets some node values or attributes. See also the next
+    section: GENERAL SET/GET
 
-  $item->media_credit( $credit, rold => $role );
-    This method sets/gets the value of the item's <media:credit> element for
-    RSS. This method is ignored for RDF/Atom. The second argument is
-    optional. This method returns the current value when the $credit is not
-    defined.
+  $value = $item->get( $key );
+    This method returns the node value or attribute. See also the next
+    section: GENERAL SET/GET
 
-  $item->media_category( $category, scheme => $scheme );
-    This method sets/gets the value of the item's <media:category> element
-    for RSS. This method is ignored for RDF/Atom. The second argument is
-    optional. This method returns the current value when the $category is
-    not defined.
+  $link = $item->link();
+    This method returns the item's <link> value.
+
+GENERAL SET/GET
+    XML::FeedPP understands only <rdf:*>, <dc:*> modules and RSS/RDF/ATOM's
+    default namespaces. There are NO native methods for any other external
+    modules, such as <media:*>. But set()/get() methods are available to
+    get/set the value of any elements or attributes for these modules.
+
+  $item->set( 'module:name' => $value );
+    This code sets the value of the child node: <item><module:name>$value
+
+  $item->set( 'module:name@attr' => $value );
+    This code sets the value of the child node's attribute:
+    <item><module:name attr="$value">
+
+  $item->set( '@attr' => $value );
+    This code sets the value of the item's attribute: <item attr="$value">
+
+  $item->set( 'hoge/pomu@hare' => $value );
+    This code sets the value of the child node's child node's attribute:
+    <item><hoge><pomu attr="$value">
 
 DATE/TIME FORMATS
     XML::FeedPP allows you to describe date/time by three formats following:

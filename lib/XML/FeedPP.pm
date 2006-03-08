@@ -4,10 +4,9 @@
     use Carp;
     use Time::Local;
     use XML::TreePP;
-#   use warnings;
 # ----------------------------------------------------------------
-    use vars qw( $VERSION $XMLNS );
-    $VERSION = "0.05";
+    use vars qw( $VERSION );
+    $VERSION = "0.07";
 # ----------------------------------------------------------------
 
 =head1 NAME
@@ -153,7 +152,7 @@ This method returns the current value when the $html is not defined.
 =head2  $feed->pubDate( $date );
 
 This method sets/gets the feed's <pubDate> value for RSS,
-<dc:date> value for RDF, or <created> value for Atom.
+<dc:date> value for RDF, or <issued> value for Atom.
 This method returns the current value when the $date is not defined.
 See also the DATE/TIME FORMATS section.
 
@@ -304,7 +303,7 @@ terms as Perl itself.
 =cut
 # ----------------------------------------------------------------
     my $RSS_VERSION = '2.0';
-    my $RDF_VERSION = '2.0';
+    my $RDF_VERSION = '1.0';
     my $ATOM_VERSION = '0.3';
     my $XMLNS_RDF  = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
     my $XMLNS_RSS  = 'http://purl.org/rss/1.0/';
@@ -314,7 +313,7 @@ terms as Perl itself.
 # ----------------------------------------------------------------
     my $TREEPP_OPTIONS = {
         force_array => [qw( item rdf:li dc:subject entry )],
-        last_out    => [qw( item items entry -width -height )],
+        last_out    => [qw( description item items entry -width -height )],
     };
 # ----------------------------------------------------------------
 sub new {
@@ -325,15 +324,16 @@ sub new {
     Carp::croak "No feed source." unless defined $source;
     $self->load( $source );
     if ( exists $self->{rss} ) {
-        $self->init_rss();
+        XML::FeedPP::RSS->feed_bless( $self );
     } elsif ( exists $self->{'rdf:RDF'} ) {
-        $self->init_rdf();
+        XML::FeedPP::RDF->feed_bless( $self );
     } elsif ( exists $self->{feed} ) {
-        $self->init_atom();
+        XML::FeedPP::Atom->feed_bless( $self );
     } else {
         my $root = join( " ", sort keys %$self );
         Carp::croak "Invalid feed format: $root";
     }
+    $self->init_feed();
     $self;
 }
 # ----------------------------------------------------------------
@@ -514,9 +514,28 @@ sub get_xmlns {
     $self->{feed}->{'-'.$ns} if exists $self->{feed}->{'-'.$ns};
 }
 # ----------------------------------------------------------------
-sub init_rss {
+    package XML::FeedPP::RSS;
+    use strict;
+    use vars qw( @ISA );
+    @ISA = ( "XML::FeedPP" );
+# ----------------------------------------------------------------
+sub new {
+    my $package = shift;
+    my $source = shift;
+    my $self = {};
+    bless $self, $package;
+    if ( defined $source ) {
+        $self->load( $source );
+        if ( ! ref $self || ! ref $self->{rss} ) {
+            Carp::croak "Invalid RSS format: $source";
+        }
+    }
+    $self->init_feed();
+    $self;
+}
+# ----------------------------------------------------------------
+sub init_feed {
     my $self = shift or return;
-    XML::FeedPP::RSS->feed_bless( $self );
 
     $self->{rss} ||= {};
     $self->{rss}->{'-version'} ||= $RSS_VERSION;
@@ -533,78 +552,6 @@ sub init_rss {
         XML::FeedPP::RSS::Item->ref_bless( $item );
     }
 
-    $self;
-}
-# ----------------------------------------------------------------
-sub init_rdf {
-    my $self = shift or return;
-    XML::FeedPP::RDF->feed_bless( $self );
-
-    $self->{'rdf:RDF'} ||= {};
-    $self->xmlns( "xmlns"     => $XMLNS_RSS );
-    $self->xmlns( "xmlns:rdf" => $XMLNS_RDF );
-    $self->xmlns( "xmlns:dc"  => $XMLNS_DC  );
-
-    $self->{'rdf:RDF'}->{channel} ||= XML::FeedPP::Element->new();
-    XML::FeedPP::Element->ref_bless( $self->{'rdf:RDF'}->{channel} );
-
-    $self->{'rdf:RDF'}->{channel}->{items} ||= {};
-    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'} ||= {};
-
-    my $rdfseq = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'};
-    $rdfseq->{'rdf:li'} ||= [];
-    if ( UNIVERSAL::isa( $rdfseq->{'rdf:li'}, "HASH" )) {
-        $rdfseq->{'rdf:li'} = [ $rdfseq->{'rdf:li'} ];
-    }
-    $self->{'rdf:RDF'}->{item} ||= [];
-    if ( UNIVERSAL::isa( $self->{'rdf:RDF'}->{item}, "HASH" )) {
-        # force array when only one item exist
-        $self->{'rdf:RDF'}->{item} = [ $self->{'rdf:RDF'}->{item} ];
-    }
-    foreach my $item ( @{$self->{'rdf:RDF'}->{item}} ) {
-        XML::FeedPP::RDF::Item->ref_bless( $item );
-    }
-
-    $self;
-}
-# ----------------------------------------------------------------
-sub init_atom {
-    my $self = shift or return;
-    XML::FeedPP::Atom->feed_bless( $self );
-
-    $self->{feed} ||= XML::FeedPP::Element->new();
-    XML::FeedPP::Element->ref_bless( $self->{feed} );
-
-    $self->xmlns( "xmlns"   => $XMLNS_ATOM );
-
-    $self->{feed}->{entry} ||= [];
-    if ( UNIVERSAL::isa( $self->{feed}->{entry}, "HASH" )) {
-        # only one item
-        $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
-    }
-    foreach my $item ( @{$self->{feed}->{entry}} ) {
-        XML::FeedPP::Atom::Entry->ref_bless( $item );
-    }
-
-    $self;
-}
-# ----------------------------------------------------------------
-    package XML::FeedPP::RSS;
-    use vars qw( @ISA );
-    @ISA = ( "XML::FeedPP" );
-# ----------------------------------------------------------------
-sub new {
-    my $package = shift;
-    my $source = shift;
-    my $self = {};
-    bless $self, $package;
-    if ( defined $source ) {
-        $self->load( $source );
-        if ( ! ref $self || ! ref $self->{rss} ) {
-            Carp::croak "Invalid RSS format: $source";
-        }
-    }
-    $self->init_rss();
     $self;
 }
 # ----------------------------------------------------------------
@@ -639,6 +586,36 @@ sub get_item {
     } else {
         return scalar @{$self->{rss}->{channel}->{item}};
     }
+}
+# ----------------------------------------------------------------
+sub sort_item {
+    my $self = shift;
+    my $list = $self->{rss}->{channel}->{item} or return;
+    my @http = map {$_->{pubDate}} @$list;
+    my @w3c  = map {$_->pubDate()} @$list;
+    my %cache;
+    @cache{@http} = @w3c;
+    @$list = sort {$cache{$b->{pubDate}} cmp $cache{$a->{pubDate}}} @$list;
+}
+# ----------------------------------------------------------------
+sub uniq_item {
+    my $self = shift;
+    my $list = $self->{rss}->{channel}->{item} or return;
+    my $check = {};
+    my $uniq = [];
+    foreach my $item ( @$list ) {
+        my $link = $item->link();
+        push( @$uniq, $item ) unless $check->{$link} ++;
+    }
+    @$list = @$uniq;
+}
+# ----------------------------------------------------------------
+sub limit_item {
+    my $self = shift;
+    my $limit = shift;
+    my $list = $self->{rss}->{channel}->{item} or return;
+    $#$list = $limit-1 if ( $limit < scalar @$list );
+    scalar @$list;
 }
 # ----------------------------------------------------------------
 sub docroot { shift->{rss}; }
@@ -689,15 +666,30 @@ sub image {
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RSS::Item;
+    use strict;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP::Element" );
 # ----------------------------------------------------------------
 sub title { shift->get_or_set( "title", @_ ); }
 sub description { shift->get_or_set( "description", @_ ); }
-sub link { shift->get_or_set( "link", @_ ); }
 sub category { shift->get_or_set( "category", @_ ); }
 sub author { shift->get_or_set( "author", @_ ); }
-sub guid { shift->get_or_set( "guid", @_ ); }
+# ----------------------------------------------------------------
+sub link {
+    my $self = shift;
+    my $link = shift;
+    return $self->get_value( "link" ) unless defined $link;
+    $self->guid( $link ) unless defined $self->guid();
+    $self->set_value( link => $link );
+}
+# ----------------------------------------------------------------
+sub guid {
+    my $self = shift;
+    my $guid = shift;
+    return $self->get_value( "guid" ) unless defined $guid;
+    my $perma = shift || "true";
+    $self->set_value( guid => $guid, isPermaLink => $perma );
+}
 # ----------------------------------------------------------------
 sub pubDate {
     my $self = shift;
@@ -712,6 +704,7 @@ sub pubDate {
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RDF;
+    use strict;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP" );
 # ----------------------------------------------------------------
@@ -726,7 +719,38 @@ sub new {
             Carp::croak "Invalid RDF format: $source";
         }
     }
-    $self->init_rdf();
+    $self->init_feed();
+    $self;
+}
+# ----------------------------------------------------------------
+sub init_feed {
+    my $self = shift or return;
+
+    $self->{'rdf:RDF'} ||= {};
+    $self->xmlns( "xmlns"     => $XMLNS_RSS );
+    $self->xmlns( "xmlns:rdf" => $XMLNS_RDF );
+    $self->xmlns( "xmlns:dc"  => $XMLNS_DC  );
+
+    $self->{'rdf:RDF'}->{channel} ||= XML::FeedPP::Element->new();
+    XML::FeedPP::Element->ref_bless( $self->{'rdf:RDF'}->{channel} );
+
+    $self->{'rdf:RDF'}->{channel}->{items} ||= {};
+    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'} ||= {};
+
+    my $rdfseq = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'};
+    $rdfseq->{'rdf:li'} ||= [];
+    if ( UNIVERSAL::isa( $rdfseq->{'rdf:li'}, "HASH" )) {
+        $rdfseq->{'rdf:li'} = [ $rdfseq->{'rdf:li'} ];
+    }
+    $self->{'rdf:RDF'}->{item} ||= [];
+    if ( UNIVERSAL::isa( $self->{'rdf:RDF'}->{item}, "HASH" )) {
+        # force array when only one item exist
+        $self->{'rdf:RDF'}->{item} = [ $self->{'rdf:RDF'}->{item} ];
+    }
+    foreach my $item ( @{$self->{'rdf:RDF'}->{item}} ) {
+        XML::FeedPP::RDF::Item->ref_bless( $item );
+    }
+
     $self;
 }
 # ----------------------------------------------------------------
@@ -770,6 +794,47 @@ sub get_item {
     }
 }
 # ----------------------------------------------------------------
+sub sort_item {
+    my $self = shift;
+    my $list = $self->{'rdf:RDF'}->{item} or return;
+    $list = [ sort {$b->{"dc:date"} cmp $a->{"dc:date"}} @$list ];
+    $self->{'rdf:RDF'}->{item} = $list;
+    $self->refresh_items();
+}
+# ----------------------------------------------------------------
+sub refresh_items {
+    my $self = shift;
+    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} = [];
+    my $list = $self->{'rdf:RDF'}->{item} or return;
+    my $dest = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'};
+    foreach my $item ( @$list ) {
+        my $rdfli = XML::FeedPP::Element->new();
+        $rdfli->{'-rdf:resource'} = $item->link();
+        push( @$dest, $rdfli );
+    }
+    scalar @$dest;
+}
+# ----------------------------------------------------------------
+sub uniq_item {
+    my $self = shift;
+    my $list = $self->{'rdf:RDF'}->{item} or return;
+    my $check = {};
+    my $uniq = [];
+    foreach my $item ( @$list ) {
+        my $link = $item->link();
+        push( @$uniq, $item ) unless $check->{$link} ++;
+    }
+    $self->refresh_items();
+}
+# ----------------------------------------------------------------
+sub limit_item {
+    my $self = shift;
+    my $limit = shift;
+    my $list = $self->{'rdf:RDF'}->{item} or return;
+    $#$list = $limit-1 if ( $limit < scalar @$list );
+    $self->refresh_items();
+}
+# ----------------------------------------------------------------
 sub docroot { shift->{'rdf:RDF'}; }
 sub channel { shift->{'rdf:RDF'}->{channel}; }
 sub set { shift->{'rdf:RDF'}->{channel}->set( @_ ); }
@@ -777,9 +842,16 @@ sub get { shift->{'rdf:RDF'}->{channel}->get( @_ ); }
 # ----------------------------------------------------------------
 sub title { shift->{'rdf:RDF'}->{channel}->get_or_set( "title", @_ ); }
 sub description { shift->{'rdf:RDF'}->{channel}->get_or_set( "description", @_ ); }
-sub link { shift->{'rdf:RDF'}->{channel}->get_or_set( "link", @_ ); }
 sub language { shift->{'rdf:RDF'}->{channel}->get_or_set( "dc:language", @_ ); }
 sub copyright { shift->{'rdf:RDF'}->{channel}->get_or_set( "dc:rights", @_ ); }
+# ----------------------------------------------------------------
+sub link {
+    my $self = shift;
+    my $link = shift;
+    return $self->{'rdf:RDF'}->{channel}->get_value( "link" ) unless defined $link;
+    $self->{'rdf:RDF'}->{channel}->{'-rdf:about'} = $link;
+    $self->{'rdf:RDF'}->{channel}->set_value( "link", $link, @_ );
+}
 # ----------------------------------------------------------------
 sub pubDate {
     my $self = shift;
@@ -813,6 +885,7 @@ sub image {
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RDF::Item;
+    use strict;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP::Element" );
 # ----------------------------------------------------------------
@@ -838,6 +911,7 @@ sub pubDate {
 sub guid { undef; }          # this element is NOT supported for RDF
 # ----------------------------------------------------------------
     package XML::FeedPP::Atom;
+    use strict;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP" );
 # ----------------------------------------------------------------
@@ -852,7 +926,28 @@ sub new {
             Carp::croak "Invalid Atom format: $source";
         }
     }
-    $self->init_atom();
+    $self->init_feed();
+    $self;
+}
+# ----------------------------------------------------------------
+sub init_feed {
+    my $self = shift or return;
+
+    $self->{feed} ||= XML::FeedPP::Element->new();
+    XML::FeedPP::Element->ref_bless( $self->{feed} );
+
+    $self->xmlns( "xmlns"   => $XMLNS_ATOM );
+    $self->{feed}->{'-version'} ||= $ATOM_VERSION;
+
+    $self->{feed}->{entry} ||= [];
+    if ( UNIVERSAL::isa( $self->{feed}->{entry}, "HASH" )) {
+        # only one item
+        $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
+    }
+    foreach my $item ( @{$self->{feed}->{entry}} ) {
+        XML::FeedPP::Atom::Entry->ref_bless( $item );
+    }
+    $self->{feed}->{author} ||= { name => "-" };     # dummy for validation
     $self;
 }
 # ----------------------------------------------------------------
@@ -885,6 +980,33 @@ sub get_item {
     } else {
         return scalar @{$self->{feed}->{entry}};
     }
+}
+# ----------------------------------------------------------------
+sub sort_item {
+    my $self = shift;
+    my $list = $self->{feed}->{entry} or return;
+    $self->{feed}->{entry} = [ sort {$b->{created} cmp $a->{created}} @$list ];
+    scalar @$list
+}
+# ----------------------------------------------------------------
+sub uniq_item {
+    my $self = shift;
+    my $list = $self->{feed}->{entry} or return;
+    my $check = {};
+    my $uniq = [];
+    foreach my $item ( @$list ) {
+        my $link = $item->link();
+        push( @$uniq, $item ) unless $check->{$link} ++;
+    }
+    @$list = @$uniq;
+}
+# ----------------------------------------------------------------
+sub limit_item {
+    my $self = shift;
+    my $limit = shift;
+    my $list = $self->{feed}->{entry} or return;
+    $#$list = $limit-1 if ( $limit < scalar @$list );
+    scalar @$list;
 }
 # ----------------------------------------------------------------
 sub docroot { shift->{feed}; }
@@ -920,7 +1042,7 @@ sub link {
             $self->{feed}->set_attr( "link",
                 href    =>  $link,
                 type    =>  "text/html",
-                rel     =>  "alternative" );
+                rel     =>  "alternate" );
         }
     } elsif ( ref $html ) {
         return $html->{'-href'};
@@ -948,6 +1070,7 @@ sub copyright {
 sub image { undef; }          # this element is NOT supported for Atom
 # ----------------------------------------------------------------
     package XML::FeedPP::Atom::Entry;
+    use strict;
     use vars qw( @ISA );
     @ISA = ( "XML::FeedPP::Element" );
 # ----------------------------------------------------------------
@@ -970,28 +1093,28 @@ sub link {
     $node = [ $node ] if UNIVERSAL::isa( $node, "HASH" );
     my $html = ( grep { ! ref $_ || ! exists $_->{'-type'} ||
                         $_->{'-type'} =~ m#^text/(x-)?html#i} @$node )[0];
-
-    if ( defined $link ) {
-        if ( ref $html ) {
-            $html->{'-href'} = $link;
-        } else{
-            $self->set_attr( "link",
-                href    =>  $link,
-                type    =>  "text/html",
-                rel     =>  "alternative" );
-        }
-    } elsif ( ref $html ) {
-        return $html->{'-href'};
+    if ( ref $html ) {
+        return $html->{'-href'} unless defined $link;
     } else {
-        return $html;
+        return $html unless defined $link;
     }
+    if ( ref $html ) {
+        $html->{'-href'} = $link;
+    } else{
+        $self->set_attr( "link",
+            href    =>  $link,
+            type    =>  "text/html",
+            rel     =>  "alternate" );
+    }
+    $self->set_value( "id", $link ) unless defined $self->guid();
 }
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->get_value( "created" ) unless defined $date;
+    return $self->get_value( "issued" ) unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
-    $self->set_value( "created", $date );
+    $self->set_value( "issued", $date );
+    $self->set_value( "modified", $date );
 }
 sub author {
     my $self = shift;
@@ -1007,6 +1130,7 @@ sub guid { shift->get_or_set( "id", @_ ); }
 sub category { undef; }          # this element is NOT supported for Atom
 # ----------------------------------------------------------------
     package XML::FeedPP::Element;
+    use strict;
 # ----------------------------------------------------------------
 sub new {
     my $package = shift;
@@ -1153,6 +1277,7 @@ sub set_attr {
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::Util;
+    use strict;
 # ----------------------------------------------------------------
     my( @DoW, @MoY, %MoY );
     @DoW = qw(Sun Mon Tue Wed Thu Fri Sat);

@@ -89,7 +89,7 @@
 # ----------------------------------------------------------------
     like( $source2, qr/<link[^>]*           href="\Q$link1\E/x,   '<link href="">' );
     like( $source2, qr/<title[^>]*>\s*            \Q$title1\E/x,  "<title>" );
-    like( $source2, qr/<created[^>]*>\s*          \Q$idateB\E/x,  "<created>" );
+    like( $source2, qr/<issued[^>]*>\s*           \Q$idateB\E/x,  "<issued>" );
     like( $source2, qr/<content[^>]*>\s*          \Q$idesc\E/x,   "<content>" );
 #   like( $source2, qr/<category[^>]*>\s*         \Q$icate\E/x,   "<category>" );
     like( $source2, qr/<name[^>]*>\s*             \Q$iauthor\E/x, "<author><name>" );

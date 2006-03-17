@@ -6,7 +6,7 @@
     use XML::TreePP;
 # ----------------------------------------------------------------
     use vars qw( $VERSION );
-    $VERSION = "0.07";
+    $VERSION = "0.08";
 # ----------------------------------------------------------------
 
 =head1 NAME
@@ -53,7 +53,7 @@ marges another files, and generates a XML file.
 This module is a pure Perl implementation and do not requires any other modules
 expcept for XML::FeedPP.
 
-=head1  METHODS
+=head1 METHODS FOR FEED
 
 =head2  $feed = XML::FreePP->new( 'index.rss' );
 
@@ -125,6 +125,23 @@ If $num is defined, this method returns the $num-th item's object.
 If $num is not defined, this method returns the list of all items
 on array context or the number of items on scalar context.
 
+=head2  $feed->sort_item();
+
+This method sorts the order of items in the feed by pubDate.
+
+=head2  $feed->uniq_item();
+
+This method makes items unique. The second and succeeding items
+which have a same link URL are removed.
+
+=head2  $feed->limit_item( $num );
+
+This method removes items which exceed the limit specified.
+
+=head2  $feed->normalize();
+
+This method calls both of sort_item() method and uniq_item() method.
+
 =head2  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
 
 This code sets the XML namespace at the document root of the feed.
@@ -137,7 +154,7 @@ This code returns the URL of the specified XML namespace.
 
 This code returns the list of all XML namespace used in the feed.
 
-=head1  METHODS FOR CHANNEL/FEED
+=head1  METHODS FOR CHANNEL
 
 =head2  $feed->title( $text );
 
@@ -180,7 +197,7 @@ This method sets/gets the feed's <image> value and its child nodes
 for RSS/RDF. This method is ignored for Atom.
 This method returns the current values as array when any arguments are not defined.
 
-=head1  METHODS FOR ITEM/ENTRY
+=head1  METHODS FOR ITEM
 
 =head2  $item->title( $text );
 
@@ -321,7 +338,7 @@ sub new {
     my $source = shift;
     my $self = {};
     bless $self, $package;
-    Carp::croak "No feed source." unless defined $source;
+    Carp::croak "No feed source" unless defined $source;
     $self->load( $source );
     if ( exists $self->{rss} ) {
         XML::FeedPP::RSS->feed_bless( $self );
@@ -391,17 +408,17 @@ sub merge {
         $self->merge_common_channel( $target );
         $self->merge_common_items( $target );
     }
+    $self->normalize();
     undef;
 }
 # ----------------------------------------------------------------
 sub merge_native_items {
     my $self = shift;
     my $target = shift;
-    my $map1 = { map {$_->link()=>$_} $self->get_item() };
-    foreach my $item2 ( $target->get_item ) {
-        my $link2 = $item2->link();
-        my $item1 = $map1->{$link2} || $self->add_item( $link2 );
-        XML::FeedPP::Util::merge_hash( $item1, $item2 );
+    foreach my $srcitem ( $target->get_item() ) {
+        my $srclink = $srcitem->link();
+        my $newitem = $self->add_item( $srclink );
+        XML::FeedPP::Util::merge_hash( $newitem, $srcitem );
     }
 }
 # ----------------------------------------------------------------
@@ -514,6 +531,12 @@ sub get_xmlns {
     $self->{feed}->{'-'.$ns} if exists $self->{feed}->{'-'.$ns};
 }
 # ----------------------------------------------------------------
+sub normalize {
+    my $self = shift;
+    $self->sort_item();
+    $self->uniq_item();
+}
+# ----------------------------------------------------------------
     package XML::FeedPP::RSS;
     use strict;
     use vars qw( @ISA );
@@ -568,7 +591,7 @@ sub merge_native_channel {
 sub add_item {
     my $self = shift;
     my $link = shift;
-    Carp::croak "add_item needs a argument.\n" unless defined $link;
+    Carp::croak "add_item needs a argument" unless defined $link;
     my $item = XML::FeedPP::RSS::Item->new();
     $item->link( $link );
     push( @{$self->{rss}->{channel}->{item}}, $item );
@@ -591,11 +614,15 @@ sub get_item {
 sub sort_item {
     my $self = shift;
     my $list = $self->{rss}->{channel}->{item} or return;
-    my @http = map {$_->{pubDate}} @$list;
-    my @w3c  = map {$_->pubDate()} @$list;
+    my @http = map {exists $_->{pubDate} ? $_->{pubDate} : ""} @$list;
+    my @w3c  = map {exists $_->{pubDate} ? $_->pubDate() : ""} @$list;
     my %cache;
     @cache{@http} = @w3c;
-    @$list = sort {$cache{$b->{pubDate}} cmp $cache{$a->{pubDate}}} @$list;
+    @$list = sort {
+        exists $a->{pubDate} && 
+        exists $b->{pubDate} && 
+        $cache{$b->{pubDate}} cmp $cache{$a->{pubDate}}
+    } @$list;
 }
 # ----------------------------------------------------------------
 sub uniq_item {
@@ -632,13 +659,19 @@ sub copyright { shift->{rss}->{channel}->get_or_set( "copyright", @_ ); }
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    if ( ! defined $date ) {
-        $date = $self->{rss}->{channel}->get_value( "pubDate" );
-        $date = XML::FeedPP::Util::rfc1123_to_w3cdtf( $date );
-        return $date;
-    }
+    return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_rfc1123( $date );
     $self->{rss}->{channel}->set_value( "pubDate", $date );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_w3cdtf {
+    my $self = shift;
+    my $date = $self->get_pubDate_rfc1123();
+    XML::FeedPP::Util::rfc1123_to_w3cdtf( $date );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_rfc1123 {
+    shift->{rss}->{channel}->get_value( "pubDate" );
 }
 # ----------------------------------------------------------------
 sub image {
@@ -694,13 +727,19 @@ sub guid {
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    if ( ! defined $date ) {
-        $date = $self->get_value( "pubDate" );
-        $date = XML::FeedPP::Util::rfc1123_to_w3cdtf( $date );
-        return $date;
-    }
+    return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_rfc1123( $date );
     $self->set_value( "pubDate", $date );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_w3cdtf {
+    my $self = shift;
+    my $date = $self->get_pubDate_rfc1123();
+    XML::FeedPP::Util::rfc1123_to_w3cdtf( $date );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_rfc1123 {
+    shift->get_value( "pubDate" );
 }
 # ----------------------------------------------------------------
     package XML::FeedPP::RDF;
@@ -779,7 +818,6 @@ sub add_item {
 
     $item;
 }
-
 # ----------------------------------------------------------------
 sub get_item {
     my $self = shift;
@@ -797,22 +835,13 @@ sub get_item {
 sub sort_item {
     my $self = shift;
     my $list = $self->{'rdf:RDF'}->{item} or return;
-    $list = [ sort {$b->{"dc:date"} cmp $a->{"dc:date"}} @$list ];
+    $list = [ sort {
+        exists $a->{"dc:date"} && 
+        exists $b->{"dc:date"} && 
+        $b->{"dc:date"} cmp $a->{"dc:date"}
+    } @$list ];
     $self->{'rdf:RDF'}->{item} = $list;
-    $self->refresh_items();
-}
-# ----------------------------------------------------------------
-sub refresh_items {
-    my $self = shift;
-    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} = [];
-    my $list = $self->{'rdf:RDF'}->{item} or return;
-    my $dest = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'};
-    foreach my $item ( @$list ) {
-        my $rdfli = XML::FeedPP::Element->new();
-        $rdfli->{'-rdf:resource'} = $item->link();
-        push( @$dest, $rdfli );
-    }
-    scalar @$dest;
+    $self->__refresh_items();
 }
 # ----------------------------------------------------------------
 sub uniq_item {
@@ -824,7 +853,8 @@ sub uniq_item {
         my $link = $item->link();
         push( @$uniq, $item ) unless $check->{$link} ++;
     }
-    $self->refresh_items();
+    $self->{'rdf:RDF'}->{item} = $uniq;
+    $self->__refresh_items();
 }
 # ----------------------------------------------------------------
 sub limit_item {
@@ -832,7 +862,20 @@ sub limit_item {
     my $limit = shift;
     my $list = $self->{'rdf:RDF'}->{item} or return;
     $#$list = $limit-1 if ( $limit < scalar @$list );
-    $self->refresh_items();
+    $self->__refresh_items();
+}
+# ----------------------------------------------------------------
+sub __refresh_items {
+    my $self = shift;
+    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} = [];
+    my $list = $self->{'rdf:RDF'}->{item} or return;
+    my $dest = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'};
+    foreach my $item ( @$list ) {
+        my $rdfli = XML::FeedPP::Element->new();
+        $rdfli->{'-rdf:resource'} = $item->link();
+        push( @$dest, $rdfli );
+    }
+    scalar @$dest;
 }
 # ----------------------------------------------------------------
 sub docroot { shift->{'rdf:RDF'}; }
@@ -856,9 +899,19 @@ sub link {
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->{'rdf:RDF'}->{channel}->get_value( "dc:date" ) unless defined $date;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
     $self->{'rdf:RDF'}->{channel}->set_value( "dc:date", $date );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_w3cdtf {
+    shift->{'rdf:RDF'}->{channel}->get_value( "dc:date" );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_rfc1123 {
+    my $self = shift;
+    my $date = $self->get_pubDate_rfc1123();
+    XML::FeedPP::Util::w3cdtf_to_rfc1123( $date );
 }
 # ----------------------------------------------------------------
 sub image {
@@ -893,6 +946,7 @@ sub title { shift->get_or_set( "title", @_ ); }
 sub description { shift->get_or_set( "description", @_ ); }
 sub category { shift->get_or_set( "category", @_ ); }
 sub author { shift->get_or_set( "creator", @_ ); }
+sub guid { undef; }          # this element is NOT supported for RDF
 # ----------------------------------------------------------------
 sub link {
     my $self = shift;
@@ -901,14 +955,24 @@ sub link {
     $self->{'-rdf:about'} = $link;
     $self->set_value( "link", $link, @_ );
 }
+# ----------------------------------------------------------------
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->get_value( "dc:date" ) unless defined $date;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
     $self->set_value( "dc:date", $date );
 }
-sub guid { undef; }          # this element is NOT supported for RDF
+# ----------------------------------------------------------------
+sub get_pubDate_w3cdtf {
+    shift->get_value( "dc:date" );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_rfc1123 {
+    my $self = shift;
+    my $date = $self->get_pubDate_rfc1123();
+    XML::FeedPP::Util::w3cdtf_to_rfc1123( $date );
+}
 # ----------------------------------------------------------------
     package XML::FeedPP::Atom;
     use strict;
@@ -985,7 +1049,12 @@ sub get_item {
 sub sort_item {
     my $self = shift;
     my $list = $self->{feed}->{entry} or return;
-    $self->{feed}->{entry} = [ sort {$b->{created} cmp $a->{created}} @$list ];
+    $list = [ sort {
+        exists $a->{issued} && 
+        exists $b->{issued} && 
+        $b->{issued} cmp $a->{issued}
+    } @$list ];
+    $self->{feed}->{entry} = $list;
     scalar @$list
 }
 # ----------------------------------------------------------------
@@ -1020,12 +1089,14 @@ sub title {
     return $self->{feed}->get_value( "title" ) unless defined $title;
     $self->{feed}->set_value( "title" => $title, type => "text/plain" );
 }
+# ----------------------------------------------------------------
 sub description {
     my $self = shift;
     my $desc = shift;
     return $self->{feed}->get_value( "tagline" ) unless defined $desc;
     $self->{feed}->set_value( "tagline" => $desc, type => "text/html", mode => "escaped" );
 }
+# ----------------------------------------------------------------
 sub link {
     my $self = shift;
     my $link = shift;
@@ -1051,22 +1122,36 @@ sub link {
     }
     undef;
 }
+# ----------------------------------------------------------------
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->{feed}->get_value( "modified" ) unless defined $date;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
     $self->{feed}->get_or_set( "modified", $date );
 }
+# ----------------------------------------------------------------
+sub get_pubDate_w3cdtf {
+    shift->{feed}->get_value( "modified" );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_rfc1123 {
+    my $self = shift;
+    my $date = $self->get_pubDate_rfc1123();
+    XML::FeedPP::Util::w3cdtf_to_rfc1123( $date );
+}
+# ----------------------------------------------------------------
 sub language {
     my $self = shift;
     my $lang = shift;
     return $self->{feed}->{'-xml:lang'} unless defined $lang;
     $self->{feed}->{'-xml:lang'} = $lang;
 }
+# ----------------------------------------------------------------
 sub copyright {
     shift->{feed}->get_or_set( "copyright" => @_ );
 }
+# ----------------------------------------------------------------
 sub image { undef; }          # this element is NOT supported for Atom
 # ----------------------------------------------------------------
     package XML::FeedPP::Atom::Entry;
@@ -1080,12 +1165,14 @@ sub title {
     return $self->get_value( "title" ) unless defined $title;
     $self->set_value( "title" => $title, type => "text/plain" );
 }
+# ----------------------------------------------------------------
 sub description {
     my $self = shift;
     my $desc = shift;
     return $self->get_value( "content" ) unless defined $desc;
     $self->set_value( "content" => $desc, type => "text/html", mode => "escaped" );
 }
+# ----------------------------------------------------------------
 sub link {
     my $self = shift;
     my $link = shift;
@@ -1108,14 +1195,26 @@ sub link {
     }
     $self->set_value( "id", $link ) unless defined $self->guid();
 }
+# ----------------------------------------------------------------
 sub pubDate {
     my $self = shift;
     my $date = shift;
-    return $self->get_value( "issued" ) unless defined $date;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf( $date );
     $self->set_value( "issued", $date );
     $self->set_value( "modified", $date );
 }
+# ----------------------------------------------------------------
+sub get_pubDate_w3cdtf {
+    shift->get_value( "issued" );
+}
+# ----------------------------------------------------------------
+sub get_pubDate_rfc1123 {
+    my $self = shift;
+    my $date = $self->get_pubDate_rfc1123();
+    XML::FeedPP::Util::w3cdtf_to_rfc1123( $date );
+}
+# ----------------------------------------------------------------
 sub author {
     my $self = shift;
     my $name = shift;
@@ -1126,6 +1225,7 @@ sub author {
     my $author = ref $name ? $name : { name => $name };
     $self->{author} = $author;
 }
+# ----------------------------------------------------------------
 sub guid { shift->get_or_set( "id", @_ ); }
 sub category { undef; }          # this element is NOT supported for Atom
 # ----------------------------------------------------------------
@@ -1287,20 +1387,26 @@ sub set_attr {
 sub epoch_to_w3cdtf {
     my $epoch = shift;
     return unless defined $epoch;
-    my( $sec, $min, $hour, $day, $mon, $year ) = gmtime( $epoch );
+    my( $sec, $min, $hour, $day, $mon, $year ) = localtime( $epoch );
     $year += 1900;
     $mon ++;
-    sprintf( "%04d-%02d-%02dT%02d:%02d:%02dZ",
-        $year, $mon, $day, $hour, $min, $sec );
+    my $off = (Time::Local::timegm(localtime($epoch))-
+               Time::Local::timegm(gmtime($epoch)))/60;
+    my $tz = $off ? sprintf( "%+03d:%02d", $off/60, $off%60 ) : "Z";
+    sprintf( "%04d-%02d-%02dT%02d:%02d:%02d%s",
+        $year, $mon, $day, $hour, $min, $sec, $tz );
 }
 # ----------------------------------------------------------------
 sub epoch_to_rfc1123 {
     my $epoch = shift;
     return unless defined $epoch;
-    my( $sec, $min, $hour, $mday, $mon, $year, $wday ) = gmtime( $epoch );
+    my( $sec, $min, $hour, $mday, $mon, $year, $wday ) = localtime( $epoch );
     $year += 1900;
-    sprintf( "%s, %02d %s %04d %02d:%02d:%02d GMT",
-        $DoW[$wday], $mday, $MoY[$mon], $year, $hour, $min, $sec);
+    my $off = (Time::Local::timegm(localtime($epoch))-
+               Time::Local::timegm(gmtime($epoch)))/60;
+    my $tz = $off ? sprintf( "%+03d%02d", $off/60, $off%60 ) : "GMT";
+    sprintf( "%s, %02d %s %04d %02d:%02d:%02d %s",
+        $DoW[$wday], $mday, $MoY[$mon], $year, $hour, $min, $sec, $tz );
 }
 # ----------------------------------------------------------------
 sub rfc1123_to_w3cdtf {
@@ -1372,6 +1478,7 @@ sub merge_hash {
     my $map = { map {$_=>1} @_ };
     foreach my $key ( keys %$merge ) {
         next if exists $map->{$key};
+        next if exists $base->{$key};
         $base->{$key} = $merge->{$key};
     }
 }

@@ -3,7 +3,6 @@ lib/XML/FeedPP.pm
 README
 Changes
 MANIFEST
-META.yml
 t/atom.t
 t/datetime.t
 t/encoding.t
@@ -14,4 +13,6 @@ t/rdf.t
 t/round.t
 t/rss.t
 t/setget.t
+t/sort_item.t
 t/xmlns.t
+META.yml

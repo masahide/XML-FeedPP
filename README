@@ -39,7 +39,7 @@ DESCRIPTION
     Perl implementation and do not requires any other modules expcept for
     XML::FeedPP.
 
-METHODS
+METHODS FOR FEED
   $feed = XML::FreePP->new( 'index.rss' );
     This constructor method creates a instance of the XML::FeedPP. The
     format of $source must be one of the supported feed fromats: RSS, RDF or
@@ -54,17 +54,17 @@ METHODS
 
   $feed = XML::FreePP::RSS->new( $source );
     This constructor method creates a instance for RSS format. The first
-    argument is optional. This method returns a empty instance when $source
+    argument is optional. This method returns an empty instance when $source
     is not defined.
 
   $feed = XML::FreePP::RDF->new( $source );
     This constructor method creates a instance for RDF format. The first
-    argument is optional. This method returns a empty instance when $source
+    argument is optional. This method returns an empty instance when $source
     is not defined.
 
   $feed = XML::FreePP::Atom->new( $source );
     This constructor method creates a instance for Atom format. The first
-    argument is optional. This method returns a empty instance when $source
+    argument is optional. This method returns an empty instance when $source
     is not defined.
 
   $feed->load( $source );
@@ -98,6 +98,19 @@ METHODS
     returns the list of all items on array context or the number of items on
     scalar context.
 
+  $feed->sort_item();
+    This method sorts the order of items in the feed by pubDate.
+
+  $feed->uniq_item();
+    This method makes items unique. The second and succeeding items which
+    have a same link URL are removed.
+
+  $feed->limit_item( $num );
+    This method removes items which exceed the limit specified.
+
+  $feed->normalize();
+    This method calls both of sort_item() method and uniq_item() method.
+
   $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
     This code sets the XML namespace at the document root of the feed.
 
@@ -107,7 +120,7 @@ METHODS
   @list = $feed->xmlns();
     This code returns the list of all XML namespace used in the feed.
 
-METHODS FOR CHANNEL/FEED
+METHODS FOR CHANNEL
   $feed->title( $text );
     This method sets/gets the feed's <title> value. This method returns the
     current value when the $title is not defined.
@@ -118,7 +131,7 @@ METHODS FOR CHANNEL/FEED
 
   $feed->pubDate( $date );
     This method sets/gets the feed's <pubDate> value for RSS, <dc:date>
-    value for RDF, or <created> value for Atom. This method returns the
+    value for RDF, or <issued> value for Atom. This method returns the
     current value when the $date is not defined. See also the DATE/TIME
     FORMATS section.
 
@@ -142,7 +155,7 @@ METHODS FOR CHANNEL/FEED
     RSS/RDF. This method is ignored for Atom. This method returns the
     current values as array when any arguments are not defined.
 
-METHODS FOR ITEM/ENTRY
+METHODS FOR ITEM
   $item->title( $text );
     This method sets/gets the item's <title> value. This method returns the
     current value when the $text is not defined.
@@ -227,8 +240,7 @@ MODULE DEPENDENCIES
     required on Perl 5.8.x and later.
 
 AUTHOR
-    Yusuke Kawasaki, <u-suke [at] kawa.net>
-    http://www.kawa.net/works/perl/feedpp/feedpp-e.html
+    Yusuke Kawasaki, http://www.kawa.net/
 
 COPYRIGHT AND LICENSE
     Copyright (c) 2006 Yusuke Kawasaki. All rights reserved. This program is

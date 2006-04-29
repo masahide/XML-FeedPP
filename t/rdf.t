@@ -79,20 +79,20 @@
     my $source2 = $feed1->to_string();
     is( $source1, $source2, "turn around - rss source." );
 # ----------------------------------------------------------------
-    like( $source2, qr/<title[^>]*>\s*      \Q$ftitle\E/x,  "<title>" );
-    like( $source2, qr/<description[^>]*>\s*\Q$fdesc\E/x,   "<description>" );
-    like( $source2, qr/<dc:date[^>]*>\s*    \Q$fdateB\E/x,  "<dc:date>" );
-    like( $source2, qr/<dc:rights[^>]*>\s*  \Q$fright\E/x,  "<dc:rights>" );
-    like( $source2, qr/<link[^>]*>\s*       \Q$flink\E/x,   "<link>" );
-    like( $source2, qr/<dc:lang[^>]*>\s*    \Q$flang\E/x,   "<dc:lang>" );
+    like( $source2, qr/<title[^>]*>\s*       \Q$ftitle\E/x,  "<title>" );
+    like( $source2, qr/<description[^>]*>\s* \Q$fdesc\E/x,   "<description>" );
+    like( $source2, qr/<dc:date[^>]*>\s*     \Q$fdateB\E/x,  "<dc:date>" );
+    like( $source2, qr/<dc:rights[^>]*>\s*   \Q$fright\E/x,  "<dc:rights>" );
+    like( $source2, qr/<link[^>]*>\s*        \Q$flink\E/x,   "<link>" );
+    like( $source2, qr/<dc:lang[^>]*>\s*     \Q$flang\E/x,   "<dc:lang>" );
 # ----------------------------------------------------------------
-    like( $source2, qr/<link[^>]*>\s*             \Q$link1\E/x,   "<link>" );
-    like( $source2, qr/<title[^>]*>\s*            \Q$title1\E/x,  "<title>" );
-    like( $source2, qr/<dc:date[^>]*>\s*          \Q$idateB\E/x,  "<dc:date>" );
-    like( $source2, qr/<description[^>]*>\s*      \Q$idesc\E/x,   "<description>" );
-    like( $source2, qr/<category[^>]*>\s*         \Q$icate\E/x,   "<category>" );
-    like( $source2, qr/<creator[^>]*>\s*          \Q$iauthor\E/x, "<creator>" );
-#   like( $source2, qr/<guid[^>]*>\s*             \Q$iguid\E/x,   "<guid>" );
+    like( $source2, qr/<link[^>]*>\s*        \Q$link1\E/x,   "<link>" );
+    like( $source2, qr/<title[^>]*>\s*       \Q$title1\E/x,  "<title>" );
+    like( $source2, qr/<dc:date[^>]*>\s*     \Q$idateB\E/x,  "<dc:date>" );
+    like( $source2, qr/<description[^>]*>\s* \Q$idesc\E/x,   "<description>" );
+    like( $source2, qr/<dc:subject[^>]*>\s*  \Q$icate\E/x,   "<dc:subject>" );
+    like( $source2, qr/<creator[^>]*>\s*     \Q$iauthor\E/x, "<creator>" );
+#   like( $source2, qr/<guid[^>]*>\s*        \Q$iguid\E/x,   "<guid>" );
 # ----------------------------------------------------------------
 ;1;
 # ----------------------------------------------------------------

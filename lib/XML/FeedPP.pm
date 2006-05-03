@@ -79,11 +79,11 @@ This method returns an empty instance when $source is not defined.
 
 =head2  $feed->load( $source );
 
-Load RSS/RDF/Atom file.
+This method loads a RSS/RDF/Atom file like new() method do.
 
 =head2  $feed->merge( $source );
 
-Merge RSS/RDF/Atom file into the existing $feed instance.
+This method merges a RSS/RDF/Atom file into existing $feed instance.
 
 =head2  $string = $feed->to_string( $encoding );
 
@@ -96,27 +96,37 @@ But normaly, 'UTF-8' is recommended to the compatibilities.
 
 =head2  $feed->to_file( $filename, $encoding );
 
-This method generate XML file.
+This method generate a XML file.
 The output $encoding is optional and the default value is 'UTF-8'.
+
+=head2  $item = $feed->get_item( $num );
+
+This method returns item(s) in $feed.
+If $num is defined, it returns the $num-th item's object.
+If $num is not defined on array context, it returns a array of all items.
+If $num is not defined on scalar context, it returns a number of items.
 
 =head2  $item = $feed->add_item( $url );
 
-This method creates new item/entry and returns its instance.
+This method creates a new item/entry and returns its instance.
 First argument $link is the URL of the new item/entry.
 RSS's <item> element is a instance of XML::FeedPP::RSS::Item class.
 RDF's <item> element is a instance of XML::FeedPP::RDF::Item class.
 Atom's <entry> element is a instance of XML::FeedPP::Atom::Entry class.
 
-=head2  $item = $feed->get_item( $num );
+=head2  $item = $feed->add_item( $srcitem );
 
-This method returns items in the feed.
-If $num is defined, this method returns the $num-th item's object.
-If $num is not defined, this method returns the list of all items
-on array context or the number of items on scalar context.
+This method duplicate a item/entery and adds it to $feed.
+$srcitem is a XML::FeedPP::*::Item class's instance 
+which is returned by get_item() method above.
+
+=head2  $feed->remove_item( $num );
+
+This method remove a item/entry from $feed.
 
 =head2  $feed->sort_item();
 
-This method sorts the order of items in the feed by pubDate.
+This method sorts the order of items in $feed by pubDate.
 
 =head2  $feed->uniq_item();
 
@@ -133,7 +143,7 @@ This method calls both of sort_item() method and uniq_item() method.
 
 =head2  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
 
-This code sets the XML namespace at the document root of the feed.
+This code adds a XML namespace at the document root of the feed.
 
 =head2  $url = $feed->xmlns( 'xmlns:media' );
 
@@ -141,7 +151,7 @@ This code returns the URL of the specified XML namespace.
 
 =head2  @list = $feed->xmlns();
 
-This code returns the list of all XML namespace used in the feed.
+This code returns the list of all XML namespace used in $feed.
 
 =head1  METHODS FOR CHANNEL
 
@@ -158,7 +168,7 @@ This method returns the current value when the $html is not defined.
 =head2  $feed->pubDate( $date );
 
 This method sets/gets the feed's <pubDate> value for RSS,
-<dc:date> value for RDF, or <issued> value for Atom.
+<dc:date> value for RDF, or <modified> value for Atom.
 This method returns the current value when the $date is not defined.
 See also the DATE/TIME FORMATS section.
 
@@ -201,7 +211,7 @@ This method returns the current value when the $text is not defined.
 =head2  $item->pubDate( $date );
 
 This method sets/gets the item's <pubDate> value for RSS,
-<dc:date> element for RDF, or <modified> element for Atom.
+<dc:date> element for RDF, or <issued> element for Atom.
 This method returns the current value when the $text is not defined.
 See also the DATE/TIME FORMATS section.
 
@@ -284,7 +294,7 @@ This is the native format of RDF and one of the formats defined by ISO 8601.
 
 =head2  $date = 1140705823;
 
-Last format is the number of seconds since the epoch, 1970-01-01T00:00:00Z.
+The last format is the number of seconds since the epoch, 1970-01-01T00:00:00Z.
 You know, this is the native format of Perl's time() function.
 
 =head1 MODULE DEPENDENCIES
@@ -315,7 +325,7 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw( $VERSION );
-$VERSION = "0.10";
+$VERSION = "0.11";
 
 my $RSS_VERSION  = '2.0';
 my $RDF_VERSION  = '1.0';
@@ -406,24 +416,13 @@ sub merge {
 
     if ( ref $self eq ref $target ) {
         $self->merge_native_channel($target);
-        $self->merge_native_items($target);
     }
     else {
         $self->merge_common_channel($target);
-        $self->merge_common_items($target);
     }
+    $self->merge_items($target);
     $self->normalize();
     undef;
-}
-
-sub merge_native_items {
-    my $self   = shift;
-    my $target = shift;
-    foreach my $srcitem ( $target->get_item() ) {
-        my $srclink = $srcitem->link();
-        my $newitem = $self->add_item($srclink);
-        XML::FeedPP::Util::merge_hash( $newitem, $srcitem );
-    }
 }
 
 sub merge_common_channel {
@@ -474,35 +473,49 @@ sub merge_common_channel {
     $self;
 }
 
-sub merge_common_items {
+sub merge_items {
     my $self   = shift;
     my $target = shift;
-
-    foreach my $item2 ( $target->get_item() ) {
-        my $link2 = $item2->link() or return;
-        my $item1 = $self->add_item($link2);
-
-        my $title2 = $item2->title();
-        $item1->title($title2) if defined $title2;
-
-        my $description2 = $item2->description();
-        $item1->description($description2) if defined $description2;
-
-        my $category2 = $item2->category();
-        $item1->category($category2) if defined $category2;
-
-        my $author2 = $item2->author();
-        $item1->author($author2) if defined $author2;
-
-        my $guid2 = $item2->guid();
-        $item1->guid($guid2) if defined $guid2;
-
-        my $pubDate2 = $item2->pubDate();
-        $item1->pubDate($pubDate2) if defined $pubDate2;
-
-        $self->merge_module_nodes( $item1, $item2 );
+    foreach my $item ( $target->get_item() ) {
+        $self->add_item( $item );
     }
-    $self;
+}
+
+sub add_clone_item {
+    my $self = shift;
+    my $srcitem = shift;
+    my $link = $srcitem->link() or return;
+    my $dstitem = $self->add_item( $link );
+
+    if ( ref $dstitem eq ref $srcitem ) {
+        XML::FeedPP::Util::merge_hash( $dstitem, $srcitem );
+    }
+    else {
+#       my $link = $srcitem->link();
+#       $dstitem->link($link) if defined $link;
+
+        my $title = $srcitem->title();
+        $dstitem->title($title) if defined $title;
+
+        my $description = $srcitem->description();
+        $dstitem->description($description) if defined $description;
+
+        my $category = $srcitem->category();
+        $dstitem->category($category) if defined $category;
+
+        my $author = $srcitem->author();
+        $dstitem->author($author) if defined $author;
+
+        my $guid = $srcitem->guid();
+        $dstitem->guid($guid) if defined $guid;
+
+        my $pubDate = $srcitem->pubDate();
+        $dstitem->pubDate($pubDate) if defined $pubDate;
+
+        $self->merge_module_nodes( $dstitem, $srcitem );
+    }
+
+    $dstitem;
 }
 
 sub merge_module_nodes {
@@ -512,7 +525,7 @@ sub merge_module_nodes {
     foreach my $key ( grep { /:/ } keys %$item2 ) {
         next if ( $key =~ /^-?(dc|rdf|xmlns):/ );
 
-        # deep copy would be more better
+        # deep copy would be better
         $item1->{$key} = $item2->{$key};
     }
 }
@@ -559,10 +572,16 @@ sub validate_pubDate {
 }
 
 # ----------------------------------------------------------------
+package XML::FeedPP::Item;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Element );
+
+# ----------------------------------------------------------------
 package XML::FeedPP::RSS;
 use strict;
 use vars qw( @ISA );
-@ISA = ("XML::FeedPP");
+@ISA = qw( XML::FeedPP );
 
 sub new {
     my $package = shift;
@@ -616,11 +635,33 @@ sub merge_native_channel {
 sub add_item {
     my $self = shift;
     my $link = shift;
+
     Carp::croak "add_item needs a argument" unless defined $link;
+    if ( ref $link ) {
+        return $self->add_clone_item( $link );
+    }
+
     my $item = XML::FeedPP::RSS::Item->new();
     $item->link($link);
     push( @{ $self->{rss}->{channel}->{item} }, $item );
     $item;
+}
+
+sub remove_item {
+    my $self   = shift;
+    my $remove = shift;
+    my $list   = $self->{rss}->{channel}->{item} or return;
+    my @deleted;
+
+    if ( $remove =~ /^\d+/ ) {
+        @deleted = splice( @$list, $remove, 1 );
+    }
+    else {
+        @deleted = grep { $_->link() eq $remove } @$list;
+        @$list = grep { $_->link() ne $remove } @$list;
+    }
+
+    wantarray ? @deleted : shift @deleted;
 }
 
 sub get_item {
@@ -734,7 +775,7 @@ sub image {
 package XML::FeedPP::RSS::Item;
 use strict;
 use vars qw( @ISA );
-@ISA = ("XML::FeedPP::Element");
+@ISA = qw( XML::FeedPP::Item );
 
 sub title       { shift->get_or_set( "title",       @_ ); }
 sub description { shift->get_or_set( "description", @_ ); }
@@ -783,7 +824,7 @@ sub get_pubDate_rfc1123 {
 package XML::FeedPP::RDF;
 use strict;
 use vars qw( @ISA );
-@ISA = ("XML::FeedPP");
+@ISA = qw( XML::FeedPP );
 
 sub new {
     my $package = shift;
@@ -849,6 +890,11 @@ sub add_item {
     my $self = shift;
     my $link = shift;
 
+    Carp::croak "add_item needs a argument" unless defined $link;
+    if ( ref $link ) {
+        return $self->add_clone_item( $link );
+    }
+
     my $rdfli = XML::FeedPP::Element->new();
     $rdfli->{'-rdf:resource'} = $link;
     $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} ||= [];
@@ -862,6 +908,25 @@ sub add_item {
     push( @{ $self->{'rdf:RDF'}->{item} }, $item );
 
     $item;
+}
+
+sub remove_item {
+    my $self   = shift;
+    my $remove = shift;
+    my $list   = $self->{'rdf:RDF'}->{item} or return;
+    my @deleted;
+
+    if ( $remove =~ /^\d+/ ) {
+        @deleted = splice( @$list, $remove, 1 );
+    }
+    else {
+        @deleted = grep { $_->link() eq $remove } @$list;
+        @$list = grep { $_->link() ne $remove } @$list;
+    }
+
+    $self->__refresh_items();
+
+    wantarray ? @deleted : shift @deleted;
 }
 
 sub get_item {
@@ -995,7 +1060,7 @@ sub image {
 package XML::FeedPP::RDF::Item;
 use strict;
 use vars qw( @ISA );
-@ISA = ("XML::FeedPP::Element");
+@ISA = qw( XML::FeedPP::Item );
 
 sub title       { shift->get_or_set( "title",       @_ ); }
 sub description { shift->get_or_set( "description", @_ ); }
@@ -1037,7 +1102,7 @@ sub get_pubDate_rfc1123 {
 package XML::FeedPP::Atom;
 use strict;
 use vars qw( @ISA );
-@ISA = ("XML::FeedPP");
+@ISA = qw( XML::FeedPP );
 
 sub new {
     my $package = shift;
@@ -1087,11 +1152,33 @@ sub add_item {
     my $self = shift;
     my $link = shift;
 
+    Carp::croak "add_item needs a argument" unless defined $link;
+    if ( ref $link ) {
+        return $self->add_clone_item( $link );
+    }
+
     my $item = XML::FeedPP::Atom::Entry->new(@_);
     $item->link($link);
     push( @{ $self->{feed}->{entry} }, $item );
 
     $item;
+}
+
+sub remove_item {
+    my $self   = shift;
+    my $remove = shift;
+    my $list   = $self->{feed}->{entry} or return;
+    my @deleted;
+
+    if ( $remove =~ /^\d+/ ) {
+        @deleted = splice( @$list, $remove, 1 );
+    }
+    else {
+        @deleted = grep { $_->link() eq $remove } @$list;
+        @$list = grep { $_->link() ne $remove } @$list;
+    }
+
+    wantarray ? @deleted : shift @deleted;
 }
 
 sub get_item {
@@ -1238,7 +1325,7 @@ sub image { undef; }    # this element is NOT supported for Atom
 package XML::FeedPP::Atom::Entry;
 use strict;
 use vars qw( @ISA );
-@ISA = ("XML::FeedPP::Element");
+@ISA = qw( XML::FeedPP::Item );
 
 sub title {
     my $self  = shift;
@@ -1421,12 +1508,12 @@ sub get {
 sub get_set_array {
     my $self = shift;
     my $elem = shift;
-	my $value = shift;
+    my $value = shift;
     if ( defined $value ) {
-		$value = [ $value, @_ ] if scalar @_;
+        $value = [ $value, @_ ] if scalar @_;
         $self->{$elem} = $value;
     } else {
-		return unless exists $self->{$elem};
+        return unless exists $self->{$elem};
         return $self->{$elem};
     }
 }

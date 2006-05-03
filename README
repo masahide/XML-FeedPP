@@ -68,10 +68,10 @@ METHODS FOR FEED
     is not defined.
 
   $feed->load( $source );
-    Load RSS/RDF/Atom file.
+    This method loads a RSS/RDF/Atom file like new() method do.
 
   $feed->merge( $source );
-    Merge RSS/RDF/Atom file into the existing $feed instance.
+    This method merges a RSS/RDF/Atom file into existing $feed instance.
 
   $string = $feed->to_string( $encoding );
     This method generates XML source as string and returns it. The output
@@ -82,24 +82,32 @@ METHODS FOR FEED
     normaly, 'UTF-8' is recommended to the compatibilities.
 
   $feed->to_file( $filename, $encoding );
-    This method generate XML file. The output $encoding is optional and the
-    default value is 'UTF-8'.
+    This method generate a XML file. The output $encoding is optional and
+    the default value is 'UTF-8'.
+
+  $item = $feed->get_item( $num );
+    This method returns item(s) in $feed. If $num is defined, it returns the
+    $num-th item's object. If $num is not defined on array context, it
+    returns a array of all items. If $num is not defined on scalar context,
+    it returns a number of items.
 
   $item = $feed->add_item( $url );
-    This method creates new item/entry and returns its instance. First
+    This method creates a new item/entry and returns its instance. First
     argument $link is the URL of the new item/entry. RSS's <item> element is
     a instance of XML::FeedPP::RSS::Item class. RDF's <item> element is a
     instance of XML::FeedPP::RDF::Item class. Atom's <entry> element is a
     instance of XML::FeedPP::Atom::Entry class.
 
-  $item = $feed->get_item( $num );
-    This method returns items in the feed. If $num is defined, this method
-    returns the $num-th item's object. If $num is not defined, this method
-    returns the list of all items on array context or the number of items on
-    scalar context.
+  $item = $feed->add_item( $srcitem );
+    This method duplicate a item/entery and adds it to $feed. $srcitem is a
+    XML::FeedPP::*::Item class's instance which is returned by get_item()
+    method above.
+
+  $feed->remove_item( $num );
+    This method remove a item/entry from $feed.
 
   $feed->sort_item();
-    This method sorts the order of items in the feed by pubDate.
+    This method sorts the order of items in $feed by pubDate.
 
   $feed->uniq_item();
     This method makes items unique. The second and succeeding items which
@@ -112,13 +120,13 @@ METHODS FOR FEED
     This method calls both of sort_item() method and uniq_item() method.
 
   $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
-    This code sets the XML namespace at the document root of the feed.
+    This code adds a XML namespace at the document root of the feed.
 
   $url = $feed->xmlns( 'xmlns:media' );
     This code returns the URL of the specified XML namespace.
 
   @list = $feed->xmlns();
-    This code returns the list of all XML namespace used in the feed.
+    This code returns the list of all XML namespace used in $feed.
 
 METHODS FOR CHANNEL
   $feed->title( $text );
@@ -131,7 +139,7 @@ METHODS FOR CHANNEL
 
   $feed->pubDate( $date );
     This method sets/gets the feed's <pubDate> value for RSS, <dc:date>
-    value for RDF, or <issued> value for Atom. This method returns the
+    value for RDF, or <modified> value for Atom. This method returns the
     current value when the $date is not defined. See also the DATE/TIME
     FORMATS section.
 
@@ -166,7 +174,7 @@ METHODS FOR ITEM
 
   $item->pubDate( $date );
     This method sets/gets the item's <pubDate> value for RSS, <dc:date>
-    element for RDF, or <modified> element for Atom. This method returns the
+    element for RDF, or <issued> element for Atom. This method returns the
     current value when the $text is not defined. See also the DATE/TIME
     FORMATS section.
 
@@ -228,7 +236,7 @@ DATE/TIME FORMATS
     and one of the formats defined by ISO 8601.
 
   $date = 1140705823;
-    Last format is the number of seconds since the epoch,
+    The last format is the number of seconds since the epoch,
     1970-01-01T00:00:00Z. You know, this is the native format of Perl's
     time() function.
 

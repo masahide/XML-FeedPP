@@ -1,5 +1,9 @@
 # XML::FeedPP Changes
 
+2006/04/30 (0.11)
+    * add method: remove_item() (thanks to JUNDU)
+    * add_item() method now allows clone another item/entry instance.
+
 2006/04/30 (0.10)
     * category() method fixed for more then one category. (thanks to vlajbert)
     * normalize() method normalizes pubDate element as well. (thanks to junichi)

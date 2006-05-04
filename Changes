@@ -1,6 +1,10 @@
 # XML::FeedPP Changes
 
-2006/04/30 (0.11)
+2006/05/05 (0.12)
+    * add method: clear_item()
+    * image() method now supports XML::FeedPP::Atom as well.
+
+2006/05/03 (0.11)
     * add method: remove_item() (thanks to JUNDU)
     * add_item() method now allows clone another item/entry instance.
 

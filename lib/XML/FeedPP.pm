@@ -124,6 +124,10 @@ which is returned by get_item() method above.
 
 This method remove a item/entry from $feed.
 
+=head2  $feed->clear_item();
+
+This method remove all items/entries from $feed.
+
 =head2  $feed->sort_item();
 
 This method sorts the order of items in $feed by pubDate.
@@ -325,7 +329,7 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw( $VERSION );
-$VERSION = "0.11";
+$VERSION = "0.12";
 
 my $RSS_VERSION  = '2.0';
 my $RDF_VERSION  = '1.0';
@@ -647,6 +651,11 @@ sub add_item {
     $item;
 }
 
+sub clear_item {
+    my $self = shift;
+    $self->{rss}->{channel}->{item} = [];
+}
+
 sub remove_item {
     my $self   = shift;
     my $remove = shift;
@@ -910,6 +919,12 @@ sub add_item {
     $item;
 }
 
+sub clear_item {
+    my $self = shift;
+    $self->{'rdf:RDF'}->{item} = [];
+    $self->__refresh_items();
+}
+
 sub remove_item {
     my $self   = shift;
     my $remove = shift;
@@ -981,8 +996,8 @@ sub limit_item {
 
 sub __refresh_items {
     my $self = shift;
-    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} = [];
     my $list = $self->{'rdf:RDF'}->{item} or return;
+    $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'} = [];
     my $dest = $self->{'rdf:RDF'}->{channel}->{items}->{'rdf:Seq'}->{'rdf:li'};
     foreach my $item (@$list) {
         my $rdfli = XML::FeedPP::Element->new();
@@ -1037,9 +1052,10 @@ sub image {
     my $url  = shift;
     if ( defined $url ) {
         my ( $title, $link ) = @_;
+        $self->{'rdf:RDF'}->{channel}->{image} ||= {};
+        $self->{'rdf:RDF'}->{channel}->{image}->{'-rdf:resource'} = $url;
         $self->{'rdf:RDF'}->{image} ||= {};
         $self->{'rdf:RDF'}->{image}->{'-rdf:resource'} = $url;
-        $self->{'rdf:RDF'}->{channel}->{image} ||= {};
         my $image = $self->{'rdf:RDF'}->{image};
         $image->{url}   = $url;
         $image->{title} = $title if defined $title;
@@ -1052,6 +1068,9 @@ sub image {
             push( @$array, exists $image->{$key} ? $image->{$key} : undef );
         }
         return wantarray ? @$array : shift @$array;
+    }
+    elsif ( exists $self->{'rdf:RDF'}->{channel}->{image} ) {
+        return $self->{'rdf:RDF'}->{channel}->{image}->{'-rdf:resource'};
     }
     undef;
 }
@@ -1130,8 +1149,7 @@ sub init_feed {
 
     $self->{feed}->{entry} ||= [];
     if ( UNIVERSAL::isa( $self->{feed}->{entry}, "HASH" ) ) {
-
-        # only one item
+        # if this feed has only one item
         $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
     }
     foreach my $item ( @{ $self->{feed}->{entry} } ) {
@@ -1162,6 +1180,11 @@ sub add_item {
     push( @{ $self->{feed}->{entry} }, $item );
 
     $item;
+}
+
+sub clear_item {
+    my $self = shift;
+    $self->{feed}->{entry} = [];
 }
 
 sub remove_item {
@@ -1252,38 +1275,46 @@ sub description {
 
 sub link {
     my $self = shift;
-    my $link = shift;
+    my $href = shift;
 
-    my $node = $self->{feed}->{link} || [];
-    $node = [$node] if UNIVERSAL::isa( $node, "HASH" );
+    my $link = $self->{feed}->{link} || [];
+    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
     my $html = (
         grep {
-                 !ref $_
-              || !exists $_->{'-type'}
-              || $_->{'-type'} =~ m#^text/(x-)?html#i
-          } @$node
+               ref $_ 
+            && exists $_->{'-rel'} 
+            && ($_->{'-rel'} eq "alternate" )
+            && exists $_->{'-type'}
+            && ($_->{'-type'} =~ m#^text/(x-)?html#i )
+        } @$link
     )[0];
 
-    if ( defined $link ) {
+    if ( defined $href ) {
         if ( ref $html ) {
-            $html->{'-href'} = $link;
+            $html->{'-href'} = $href;
         }
         else {
-            $self->{feed}->set_attr(
-                "link",
-                href => $link,
-                type => "text/html",
-                rel  => "alternate"
-            );
+            my $hash = {
+                -rel    =>  "alternate",
+                -type   =>  "text/html",
+                -href   =>  $href,
+            };
+            my $flink = $self->{feed}->{link};
+            if ( ! ref $flink ) {
+                $self->{feed}->{link} = [ $hash ];
+            }
+            elsif ( UNIVERSAL::isa( $flink, "ARRAY" )) {
+                push( @$flink, $hash );
+            }
+            elsif ( UNIVERSAL::isa( $flink, "HASH" )) {
+                $self->{feed}->{link} = [ $flink, $hash ];
+            }
         }
     }
     elsif ( ref $html ) {
         return $html->{'-href'};
     }
-    else {
-        return $html;
-    }
-    undef;
+    return;
 }
 
 sub pubDate {
@@ -1319,8 +1350,56 @@ sub copyright {
     shift->{feed}->get_or_set( "copyright" => @_ );
 }
 
-sub image { undef; }    # this element is NOT supported for Atom
+sub image {
+    my $self = shift;
+    my $href = shift;
+    my $title = shift;
 
+    my $link = $self->{feed}->{link} || [];
+    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
+    my $icon = (
+        grep {
+               ref $_ 
+            && exists $_->{'-rel'} 
+            && ($_->{'-rel'} eq "icon" )
+        } @$link
+    )[0];
+
+    if ( defined $href ) {
+        my $ext = lc(( $href =~ /\.(jpe?g|png|gif)(\W|$)/i )[0]);
+        $ext = "jpeg" if ( $ext eq "jpg" );
+        my $type = "image/".$ext if $ext;
+
+        if ( ref $icon ) {
+            $icon->{'-href'} = $href;
+            $icon->{'-type'} = $type if $type;
+            $icon->{'-title'} = $title if $title;
+        }
+        else {
+            my $hash = {};
+            $hash->{'-rel'}   = 'icon';
+            $hash->{'-href'}  = $href;
+            $hash->{'-type'}  = $type if $type;
+            $hash->{'-title'} = $title if $title;
+            my $flink = $self->{feed}->{link};
+            if ( UNIVERSAL::isa( $flink, "ARRAY" )) {
+                push( @$flink, $hash );
+            }
+            elsif ( UNIVERSAL::isa( $flink, "HASH" )) {
+                $self->{feed}->{link} = [ $flink, $hash ];
+            }
+            else {
+                $self->{feed}->{link} = [ $hash ];
+            }
+        }
+    }
+    elsif ( ref $icon ) {
+        my $array = [ $icon->{'-href'} ];
+        push( @$array, $icon->{'-title'} ) if exists $icon->{'-title'};
+        return wantarray ? @$array : shift @$array;
+    }
+    undef;
+}
 # ----------------------------------------------------------------
 package XML::FeedPP::Atom::Entry;
 use strict;
@@ -1347,34 +1426,47 @@ sub description {
 
 sub link {
     my $self = shift;
-    my $link = shift;
-    my $node = $self->{link} || [];
-    $node = [$node] if UNIVERSAL::isa( $node, "HASH" );
+    my $href = shift;
+
+    my $link = $self->{link} || [];
+    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
     my $html = (
         grep {
-                 !ref $_
-              || !exists $_->{'-type'}
-              || $_->{'-type'} =~ m#^text/(x-)?html#i
-          } @$node
+               ref $_ 
+            && exists $_->{'-rel'} 
+            && ($_->{'-rel'} eq "alternate" )
+            && exists $_->{'-type'}
+            && ($_->{'-type'} =~ m#^text/(x-)?html#i )
+        } @$link
     )[0];
-    if ( ref $html ) {
-        return $html->{'-href'} unless defined $link;
+
+    if ( defined $href ) {
+        if ( ref $html ) {
+            $html->{'-href'} = $href;
+        }
+        else {
+            my $hash = {
+                -rel    =>  "alternate",
+                -type   =>  "text/html",
+                -href   =>  $href,
+            };
+            my $flink = $self->{link};
+            if ( ! ref $flink ) {
+                $self->{link} = [ $hash ];
+            }
+            elsif ( ref $flink && UNIVERSAL::isa( $flink, "ARRAY" )) {
+                push( @$flink, $hash );
+            }
+            elsif ( ref $flink && UNIVERSAL::isa( $flink, "HASH" )) {
+                $self->{link} = [ $flink, $hash ];
+            }
+        }
+        $self->guid( $href ) unless defined $self->guid();
     }
-    else {
-        return $html unless defined $link;
+    elsif ( ref $html ) {
+        return $html->{'-href'};
     }
-    if ( ref $html ) {
-        $html->{'-href'} = $link;
-    }
-    else {
-        $self->set_attr(
-            "link",
-            href => $link,
-            type => "text/html",
-            rel  => "alternate"
-        );
-    }
-    $self->set_value( "id", $link ) unless defined $self->guid();
+    return;
 }
 
 sub pubDate {

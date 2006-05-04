@@ -106,6 +106,9 @@ METHODS FOR FEED
   $feed->remove_item( $num );
     This method remove a item/entry from $feed.
 
+  $feed->clear_item();
+    This method remove all items/entries from $feed.
+
   $feed->sort_item();
     This method sorts the order of items in $feed by pubDate.
 

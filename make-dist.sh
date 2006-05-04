@@ -1,13 +1,18 @@
 #!/bin/sh
 
 die () {
-    echo "\$ $*" >&2
+    echo "$*" >&2
     exit 1
 }
 doit () {
     echo "\$ $*" >&2
     $* || die "[ERROR:$?]"
 }
+
+egrep -v '^t/.*\.t$' MANIFEST > MANIFEST~
+ls -t t/*.t >> MANIFEST~
+diff MANIFEST MANIFEST~ > /dev/null || doit /bin/mv -f MANIFEST~ MANIFEST
+/bin/rm -f MANIFEST~
 
 [ -f Makefile ] && doit make clean
 doit perl Makefile.PL

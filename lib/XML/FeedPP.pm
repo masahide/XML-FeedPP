@@ -1,6 +1,6 @@
 =head1 NAME
 
-XML::FeedPP -- Parse/write/merge web feeds, RSS/RDF/Atom
+XML::FeedPP -- Parse/write/merge/edit web feeds, RSS/RDF/Atom
 
 =head1 SYNOPSIS
 
@@ -116,17 +116,17 @@ Atom's <entry> element is a instance of XML::FeedPP::Atom::Entry class.
 
 =head2  $item = $feed->add_item( $srcitem );
 
-This method duplicate a item/entery and adds it to $feed.
+This method duplicates a item/entery and adds it to $feed.
 $srcitem is a XML::FeedPP::*::Item class's instance 
 which is returned by get_item() method above.
 
 =head2  $feed->remove_item( $num );
 
-This method remove a item/entry from $feed.
+This method removes a item/entry from $feed.
 
 =head2  $feed->clear_item();
 
-This method remove all items/entries from $feed.
+This method removes all items/entries from $feed.
 
 =head2  $feed->sort_item();
 
@@ -329,7 +329,7 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw( $VERSION );
-$VERSION = "0.12";
+$VERSION = "0.15";
 
 my $RSS_VERSION  = '2.0';
 my $RDF_VERSION  = '1.0';
@@ -342,6 +342,7 @@ my $XMLNS_NOCOPY = [qw( xmlns xmlns:rdf xmlns:dc xmlns:atom )];
 
 my $TREEPP_OPTIONS = {
     force_array => [qw( item rdf:li entry )],
+    first_out   => [qw( -rel -type )],
     last_out    => [qw( description item items entry -width -height )],
     user_agent  => "XML-FeedPP/$VERSION ",
 };
@@ -349,10 +350,12 @@ my $TREEPP_OPTIONS = {
 sub new {
     my $package = shift;
     my $source  = shift;
-    my $self    = {};
-    bless $self, $package;
     Carp::croak "No feed source" unless defined $source;
+
+    my $self  = {};
+    bless $self, $package;
     $self->load($source, @_);
+
     if ( exists $self->{rss} ) {
         XML::FeedPP::RSS->feed_bless($self);
     }
@@ -380,6 +383,8 @@ sub feed_bless {
 sub load {
     my $self   = shift;
     my $source = shift;
+    Carp::croak "No feed source" unless defined $source;
+
     my $tree;
     my $tpp = XML::TreePP->new(%$TREEPP_OPTIONS, @_);
     if ( $source =~ m#^https?://# ) {
@@ -416,17 +421,30 @@ sub to_file {
 sub merge {
     my $self   = shift;
     my $source = shift;
-    my $target = XML::FeedPP->new($source);
+    my $target = ref $source ? $source : XML::FeedPP->new($source);
+    $self->merge_channel($target);
+    $self->merge_item($target);
+    $self->normalize();
+    undef;
+}
 
+sub merge_channel {
+    my $self   = shift;
+    my $target = shift;
     if ( ref $self eq ref $target ) {
         $self->merge_native_channel($target);
     }
     else {
         $self->merge_common_channel($target);
     }
-    $self->merge_items($target);
-    $self->normalize();
-    undef;
+}
+
+sub merge_item {
+    my $self   = shift;
+    my $target = shift;
+    foreach my $item ( $target->get_item() ) {
+        $self->add_item( $item );
+    }
 }
 
 sub merge_common_channel {
@@ -437,24 +455,21 @@ sub merge_common_channel {
     my $title2 = $target->title();
     $self->title($title2) if ( !defined $title1 && defined $title2 );
 
-    my $description1 = $self->description();
-    my $description2 = $target->description();
-    $self->description($description2)
-      if ( !defined $description1 && defined $description2 );
+    my $desc1 = $self->description();
+    my $desc2 = $target->description();
+    $self->description($desc2) if ( !defined $desc1 && defined $desc2 );
 
     my $link1 = $self->link();
     my $link2 = $target->link();
     $self->link($link2) if ( !defined $link1 && defined $link2 );
 
-    my $language1 = $self->language();
-    my $language2 = $target->language();
-    $self->language($language2)
-      if ( !defined $language1 && defined $language2 );
+    my $lang1 = $self->language();
+    my $lang2 = $target->language();
+    $self->language($lang2) if ( !defined $lang1 && defined $lang2 );
 
-    my $copyright1 = $self->copyright();
-    my $copyright2 = $target->copyright();
-    $self->copyright($copyright2)
-      if ( !defined $copyright1 && defined $copyright2 );
+    my $right1 = $self->copyright();
+    my $right2 = $target->copyright();
+    $self->copyright($right2) if ( !defined $right1 && defined $right2 );
 
     my $pubDate1 = $self->pubDate();
     my $pubDate2 = $target->pubDate();
@@ -475,14 +490,6 @@ sub merge_common_channel {
     $self->merge_module_nodes( $self->docroot, $target->docroot );
 
     $self;
-}
-
-sub merge_items {
-    my $self   = shift;
-    my $target = shift;
-    foreach my $item ( $target->get_item() ) {
-        $self->add_item( $item );
-    }
 }
 
 sub add_clone_item {
@@ -534,6 +541,23 @@ sub merge_module_nodes {
     }
 }
 
+sub normalize {
+    my $self = shift;
+    $self->normalize_pubDate();
+    $self->sort_item();
+    $self->uniq_item();
+}
+
+sub normalize_pubDate {
+    my $self = shift;
+    foreach my $item ( $self->get_item() ) {
+        my $date = $item->get_pubDate_native() or next;
+        $item->pubDate( $date );
+    }
+    my $date = $self->get_pubDate_native();
+    $self->pubDate( $date ) if $date;
+}
+
 sub xmlns {
     my $self = shift;
     my $ns   = shift;
@@ -552,27 +576,42 @@ sub xmlns {
     }
 }
 
-sub get_xmlns {
+sub get_pubDate_w3cdtf {
     my $self = shift;
-    my $ns   = shift;
-    $self->{feed}->{ '-' . $ns } if exists $self->{feed}->{ '-' . $ns };
-}
-
-sub normalize {
-    my $self = shift;
-    $self->validate_pubDate();
-    $self->sort_item();
-    $self->uniq_item();
-}
-
-sub validate_pubDate {
-    my $self = shift;
-    foreach my $item ( $self->get_item() ) {
-        my $date = $item->get_pubDate_native() or next;
-        $item->pubDate( $date );
-    }
     my $date = $self->get_pubDate_native();
-    $self->pubDate( $date ) if $date;
+    XML::FeedPP::Util::get_w3cdtf($date);
+}
+
+sub get_pubDate_rfc1123 {
+    my $self = shift;
+    my $date = $self->get_pubDate_native();
+    XML::FeedPP::Util::get_rfc1123($date);
+}
+
+sub call {
+    my $self = shift;
+    my $name = shift;
+    my $class = __PACKAGE__."::Plugin::".$name;
+    my $pmfile = $class;
+    $pmfile =~ s#::#/#g;
+    $pmfile .= ".pm";
+    local $@;
+    eval {
+        require $pmfile;
+    } unless defined $class->VERSION;
+    Carp::croak "$class failed: $@" if $@;
+    return $class->run( $self, @_ );
+}
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Plugin;
+use strict;
+
+sub run {
+    my $class = shift;
+    my $feed = shift;
+    my $ref = ref $class ? ref $class : $class;
+    Carp::croak $ref."->run() is not implemented";
 }
 
 # ----------------------------------------------------------------
@@ -580,6 +619,9 @@ package XML::FeedPP::Item;
 use strict;
 use vars qw( @ISA );
 @ISA = qw( XML::FeedPP::Element );
+
+*get_pubDate_w3cdtf  = \&XML::FeedPP::get_pubDate_w3cdtf;   # import
+*get_pubDate_rfc1123 = \&XML::FeedPP::get_pubDate_rfc1123;
 
 # ----------------------------------------------------------------
 package XML::FeedPP::RSS;
@@ -742,17 +784,9 @@ sub pubDate {
 }
 
 sub get_pubDate_native {
-    shift->{rss}->{channel}->get_value("pubDate");
-}
-
-sub get_pubDate_w3cdtf {
     my $self = shift;
-    my $date = $self->get_pubDate_rfc1123();
-    XML::FeedPP::Util::rfc1123_to_w3cdtf($date);
-}
-
-sub get_pubDate_rfc1123 {
-    shift->{rss}->{channel}->get_value("pubDate");
+    $self->{rss}->{channel}->get_value("pubDate")       # normal RSS 2.0
+    || $self->{rss}->{channel}->get_value("dc:date");   # strange
 }
 
 sub image {
@@ -816,17 +850,34 @@ sub pubDate {
 }
 
 sub get_pubDate_native {
-    shift->get_value("pubDate");
-}
-
-sub get_pubDate_w3cdtf {
     my $self = shift;
-    my $date = $self->get_pubDate_rfc1123();
-    XML::FeedPP::Util::rfc1123_to_w3cdtf($date);
+    $self->get_value("pubDate")         # normal RSS 2.0
+    || $self->get_value("dc:date");     # strange
 }
 
-sub get_pubDate_rfc1123 {
-    shift->get_value("pubDate");
+sub image {
+    my $self = shift;
+    my $url  = shift;
+    if ( defined $url ) {
+        my ( $title, $link, $desc, $width, $height ) = @_;
+        $self->{image} ||= {};
+        my $image = $self->{image};
+        $image->{url}         = $url;
+        $image->{title}       = $title if defined $title;
+        $image->{link}        = $link if defined $link;
+        $image->{description} = $desc if defined $desc;
+        $image->{width}       = $width if defined $width;
+        $image->{height}      = $height if defined $height;
+    }
+    elsif ( exists $self->{image} ) {
+        my $image = $self->{image};
+        my $array = [];
+        foreach my $key (qw( url title link description width height )) {
+            push( @$array, exists $image->{$key} ? $image->{$key} : undef );
+        }
+        return wantarray ? @$array : shift @$array;
+    }
+    undef;
 }
 
 # ----------------------------------------------------------------
@@ -1037,15 +1088,7 @@ sub get_pubDate_native {
     shift->{'rdf:RDF'}->{channel}->get_value("dc:date");
 }
 
-sub get_pubDate_w3cdtf {
-    shift->{'rdf:RDF'}->{channel}->get_value("dc:date");
-}
-
-sub get_pubDate_rfc1123 {
-    my $self = shift;
-    my $date = $self->get_pubDate_rfc1123();
-    XML::FeedPP::Util::w3cdtf_to_rfc1123($date);
-}
+*get_pubDate_w3cdtf = \&get_pubDate_native;
 
 sub image {
     my $self = shift;
@@ -1055,7 +1098,7 @@ sub image {
         $self->{'rdf:RDF'}->{channel}->{image} ||= {};
         $self->{'rdf:RDF'}->{channel}->{image}->{'-rdf:resource'} = $url;
         $self->{'rdf:RDF'}->{image} ||= {};
-        $self->{'rdf:RDF'}->{image}->{'-rdf:resource'} = $url;
+        $self->{'rdf:RDF'}->{image}->{'-rdf:about'} = $url; # fix
         my $image = $self->{'rdf:RDF'}->{image};
         $image->{url}   = $url;
         $image->{title} = $title if defined $title;
@@ -1107,15 +1150,7 @@ sub get_pubDate_native {
     shift->get_value("dc:date");
 }
 
-sub get_pubDate_w3cdtf {
-    shift->get_value("dc:date");
-}
-
-sub get_pubDate_rfc1123 {
-    my $self = shift;
-    my $date = $self->get_pubDate_rfc1123();
-    XML::FeedPP::Util::w3cdtf_to_rfc1123($date);
-}
+*get_pubDate_w3cdtf = \&get_pubDate_native;
 
 # ----------------------------------------------------------------
 package XML::FeedPP::Atom;
@@ -1268,9 +1303,9 @@ sub title {
 sub description {
     my $self = shift;
     my $desc = shift;
-    return $self->{feed}->get_value("tagline") unless defined $desc;
-    $self->{feed}
-      ->set_value( "tagline" => $desc, type => "text/html", mode => "escaped" );
+    return $self->{feed}->get_value("tagline")
+        || $self->{feed}->get_value("subtitle") unless defined $desc;
+    $self->{feed}->set_value( "tagline" => $desc, type => "text/html", mode => "escaped" );
 }
 
 sub link {
@@ -1279,15 +1314,14 @@ sub link {
 
     my $link = $self->{feed}->{link} || [];
     $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
-    my $html = (
-        grep {
-               ref $_ 
-            && exists $_->{'-rel'} 
-            && ($_->{'-rel'} eq "alternate" )
-            && exists $_->{'-type'}
-            && ($_->{'-type'} =~ m#^text/(x-)?html#i )
-        } @$link
-    )[0];
+    $link = [ grep { ref $_ } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
+    } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-type'} || $_->{'-type'} =~ m#^text/(x-)?html#i
+    } @$link ];
+    my $html = shift @$link;
 
     if ( defined $href ) {
         if ( ref $html ) {
@@ -1295,18 +1329,18 @@ sub link {
         }
         else {
             my $hash = {
-                -rel    =>  "alternate",
-                -type   =>  "text/html",
+                -rel    =>  'alternate',
+                -type   =>  'text/html',
                 -href   =>  $href,
             };
             my $flink = $self->{feed}->{link};
             if ( ! ref $flink ) {
                 $self->{feed}->{link} = [ $hash ];
             }
-            elsif ( UNIVERSAL::isa( $flink, "ARRAY" )) {
+            elsif ( UNIVERSAL::isa( $flink, 'ARRAY' )) {
                 push( @$flink, $hash );
             }
-            elsif ( UNIVERSAL::isa( $flink, "HASH" )) {
+            elsif ( UNIVERSAL::isa( $flink, 'HASH' )) {
                 $self->{feed}->{link} = [ $flink, $hash ];
             }
         }
@@ -1322,22 +1356,16 @@ sub pubDate {
     my $date = shift;
     return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf($date);
-    $self->{feed}->get_or_set( "modified", $date );
+    $self->{feed}->set_value( "modified", $date );
 }
 
 sub get_pubDate_native {
-    shift->{feed}->get_value("modified");
-}
-
-sub get_pubDate_w3cdtf {
-    shift->{feed}->get_value("modified");
-}
-
-sub get_pubDate_rfc1123 {
     my $self = shift;
-    my $date = $self->get_pubDate_rfc1123();
-    XML::FeedPP::Util::w3cdtf_to_rfc1123($date);
+    $self->{feed}->get_value("modified")        # Atom 0.3
+    || $self->{feed}->get_value("updated");     # Atom 1.0
 }
+
+*get_pubDate_w3cdtf = \&get_pubDate_native;
 
 sub language {
     my $self = shift;
@@ -1365,31 +1393,43 @@ sub image {
         } @$link
     )[0];
 
+    my $MIME_TYPES = { reverse qw(
+        image/bmp                       bmp
+        image/gif                       gif
+        image/jpeg                      jpeg
+        image/jpeg                      jpg
+        image/png                       png
+        image/svg+xml                   svg
+        image/x-icon                    ico
+        image/x-xbitmap                 xbm
+        image/x-xpixmap                 xpm
+    )};
+    my $rext = join( "|", map {"\Q$_\E"} keys %$MIME_TYPES );
+
     if ( defined $href ) {
-        my $ext = lc(( $href =~ /\.(jpe?g|png|gif)(\W|$)/i )[0]);
-        $ext = "jpeg" if ( $ext eq "jpg" );
-        my $type = "image/".$ext if $ext;
+        my $ext = ( $href =~ m#[^/]\.($rext)(\W|$)#i )[0];
+        my $type = $MIME_TYPES->{$ext} if $ext;
 
         if ( ref $icon ) {
-            $icon->{'-href'} = $href;
-            $icon->{'-type'} = $type if $type;
+            $icon->{'-href'}  = $href;
+            $icon->{'-type'}  = $type if $type;
             $icon->{'-title'} = $title if $title;
         }
         else {
-            my $hash = {};
-            $hash->{'-rel'}   = 'icon';
-            $hash->{'-href'}  = $href;
-            $hash->{'-type'}  = $type if $type;
-            $hash->{'-title'} = $title if $title;
+            my $newicon = {};
+            $newicon->{'-rel'}   = 'icon';
+            $newicon->{'-href'}  = $href;
+            $newicon->{'-type'}  = $type if $type;
+            $newicon->{'-title'} = $title if $title;
             my $flink = $self->{feed}->{link};
             if ( UNIVERSAL::isa( $flink, "ARRAY" )) {
-                push( @$flink, $hash );
+                push( @$flink, $newicon );
             }
             elsif ( UNIVERSAL::isa( $flink, "HASH" )) {
-                $self->{feed}->{link} = [ $flink, $hash ];
+                $self->{feed}->{link} = [ $flink, $newicon ];
             }
             else {
-                $self->{feed}->{link} = [ $hash ];
+                $self->{feed}->{link} = [ $newicon ];
             }
         }
     }
@@ -1416,11 +1456,12 @@ sub title {
 sub description {
     my $self = shift;
     my $desc = shift;
-    return $self->get_value("content") unless defined $desc;
+    return $self->get_value('summary') 
+        || $self->get_value('content') unless defined $desc;
     $self->set_value(
-        "content" => $desc,
-        type      => "text/html",
-        mode      => "escaped"
+        'content' => $desc,
+        type      => 'text/html',
+        mode      => 'escaped'
     );
 }
 
@@ -1430,15 +1471,14 @@ sub link {
 
     my $link = $self->{link} || [];
     $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
-    my $html = (
-        grep {
-               ref $_ 
-            && exists $_->{'-rel'} 
-            && ($_->{'-rel'} eq "alternate" )
-            && exists $_->{'-type'}
-            && ($_->{'-type'} =~ m#^text/(x-)?html#i )
-        } @$link
-    )[0];
+    $link = [ grep { ref $_ } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
+    } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-type'} || $_->{'-type'} =~ m#^text/(x-)?html#i
+    } @$link ];
+    my $html = shift @$link;
 
     if ( defined $href ) {
         if ( ref $html ) {
@@ -1446,18 +1486,18 @@ sub link {
         }
         else {
             my $hash = {
-                -rel    =>  "alternate",
-                -type   =>  "text/html",
+                -rel    =>  'alternate',
+                -type   =>  'text/html',
                 -href   =>  $href,
             };
             my $flink = $self->{link};
             if ( ! ref $flink ) {
                 $self->{link} = [ $hash ];
             }
-            elsif ( ref $flink && UNIVERSAL::isa( $flink, "ARRAY" )) {
+            elsif ( ref $flink && UNIVERSAL::isa( $flink, 'ARRAY' )) {
                 push( @$flink, $hash );
             }
-            elsif ( ref $flink && UNIVERSAL::isa( $flink, "HASH" )) {
+            elsif ( ref $flink && UNIVERSAL::isa( $flink, 'HASH' )) {
                 $self->{link} = [ $flink, $hash ];
             }
         }
@@ -1479,18 +1519,13 @@ sub pubDate {
 }
 
 sub get_pubDate_native {
-    shift->get_value("issued");
-}
-
-sub get_pubDate_w3cdtf {
-    shift->get_value("issued");
-}
-
-sub get_pubDate_rfc1123 {
     my $self = shift;
-    my $date = $self->get_pubDate_rfc1123();
-    XML::FeedPP::Util::w3cdtf_to_rfc1123($date);
+    $self->get_value("issued")          # Atom 0.3
+    || $self->get_value("modified")     # Atom 0.3
+    || $self->get_value("updated");     # Atom 1.0
 }
+
+*get_pubDate_w3cdtf = \&get_pubDate_native;
 
 sub author {
     my $self = shift;
@@ -1585,6 +1620,7 @@ sub get {
         $node = $node->{$child};
     }
     my ( $tagname, $attr ) = split( /\@/, $key, 2 );
+    return unless ref $node;
     return unless exists $node->{$tagname};
     if ( defined $attr ) {    # attribute
         return unless ref $node->{$tagname};
@@ -1623,7 +1659,15 @@ sub get_value {
     my $elem = shift;
     return unless exists $self->{$elem};
     return $self->{$elem} unless ref $self->{$elem};
-    return $self->{$elem}->{'#text'};
+    return $self->{$elem}->{'#text'} if exists $self->{$elem}->{'#text'};
+    # a hack for atom: <content type="xhtml"><div>...</div></content>
+    my $child = [ grep { /^[^\-\#]/ } keys %{$self->{$elem}} ];
+    if ( exists $self->{$elem}->{'-type'} 
+        && ($self->{$elem}->{'-type'} eq "xhtml")
+        && scalar @$child == 1) {
+        return &get_value( $self->{$elem}, $child->[0] );
+    }
+    return;
 }
 
 sub set_value {
@@ -1760,6 +1804,7 @@ sub w3cdtf_to_rfc1123 {
 
 sub get_w3cdtf {
     my $date = shift;
+    return unless defined $date;
     if ( $date =~ /^\d+$/s ) {
         return &epoch_to_w3cdtf($date);
     }
@@ -1774,6 +1819,7 @@ sub get_w3cdtf {
 
 sub get_rfc1123 {
     my $date = shift;
+    return unless defined $date;
     if ( $date =~ /^\d+$/s ) {
         return &epoch_to_rfc1123($date);
     }

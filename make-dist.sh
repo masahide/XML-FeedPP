@@ -10,14 +10,14 @@ doit () {
 }
 
 egrep -v '^t/.*\.t$' MANIFEST > MANIFEST~
-ls -t t/*.t >> MANIFEST~
+ls t/*.t >> MANIFEST~
 diff MANIFEST MANIFEST~ > /dev/null || doit /bin/mv -f MANIFEST~ MANIFEST
 /bin/rm -f MANIFEST~
 
 [ -f Makefile ] && doit make clean
 doit perl Makefile.PL
 doit make
-doit make test
+doit make disttest
 
 main=`grep version_from META.yml | cut -f 2 -d :`
 [ "$main" == "" ] && die "version_from is not found in META.yml"

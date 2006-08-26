@@ -1,5 +1,5 @@
 NAME
-    XML::FeedPP -- Parse/write/merge web feeds, RSS/RDF/Atom
+    XML::FeedPP -- Parse/write/merge/edit web feeds, RSS/RDF/Atom
 
 SYNOPSIS
     Get a RSS file and parse it.
@@ -99,15 +99,15 @@ METHODS FOR FEED
     instance of XML::FeedPP::Atom::Entry class.
 
   $item = $feed->add_item( $srcitem );
-    This method duplicate a item/entery and adds it to $feed. $srcitem is a
+    This method duplicates a item/entery and adds it to $feed. $srcitem is a
     XML::FeedPP::*::Item class's instance which is returned by get_item()
     method above.
 
   $feed->remove_item( $num );
-    This method remove a item/entry from $feed.
+    This method removes a item/entry from $feed.
 
   $feed->clear_item();
-    This method remove all items/entries from $feed.
+    This method removes all items/entries from $feed.
 
   $feed->sort_item();
     This method sorts the order of items in $feed by pubDate.

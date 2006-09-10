@@ -24,6 +24,7 @@ t/15_clone_item.t
 t/16_invalid_pubdate.t
 t/17_multi_category.t
 t/18_image_atom.t
+t/19_invalid_w3cdtf.t
 t/40_dumpjson_pp.t
 t/41_dumpjson_syck.t
 t/42_dumpjson_slim.t

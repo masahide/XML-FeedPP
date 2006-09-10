@@ -329,7 +329,7 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw( $VERSION );
-$VERSION = "0.15";
+$VERSION = "0.16";
 
 my $RSS_VERSION  = '2.0';
 my $RDF_VERSION  = '1.0';
@@ -1782,10 +1782,13 @@ sub w3cdtf_to_rfc1123 {
     return unless defined $str;
     my ( $year, $mon, $mday, $hour, $min, $sec, $tz ) = (
         $str =~ m{
-        ^(\d+)-(\d+)-(\d+)T(\d+):(\d+):(\d+)([\+\-]\d+:?\d{2})?
+        ^(\d+)-(\d+)-(\d+)(?:T(\d+):(\d+)(?::(\d+)(?:\.\d*)?\:?)?([\+\-]\d+:?\d{2})?|$)
     }x
     );
     return unless ( $year > 1900 && $mon && $mday );
+    $hour ||= 0;
+    $min ||= 0;
+    $sec ||= 0;
     my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
 
     my $wday = ( gmtime($epoch) )[6];
@@ -1811,7 +1814,7 @@ sub get_w3cdtf {
     elsif ( $date =~ /^([A-Za-z]+,\s*)?\d+\s+[A-Za-z]+\s+\d+\s+\d+:\d+:\d+/s ) {
         return &rfc1123_to_w3cdtf($date);
     }
-    elsif ( $date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z\+\-]/s ) {
+    elsif ( $date =~ /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?:?)?[Z\+\-]|$)/s ) {
         return $date;
     }
     undef;
@@ -1826,7 +1829,7 @@ sub get_rfc1123 {
     elsif ( $date =~ /^([A-Za-z]+,\s*)?\d+\s+[A-Za-z]+\s+\d+\s+\d+:\d+:\d+/s ) {
         return $date;
     }
-    elsif ( $date =~ /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[Z\+\-]/s ) {
+    elsif ( $date =~ /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?:?)?[Z\+\-]|$)/s ) {
         return &w3cdtf_to_rfc1123($date);
     }
     undef;

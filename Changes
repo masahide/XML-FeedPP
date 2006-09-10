@@ -1,5 +1,8 @@
 # XML::FeedPP Changes
 
+2006/09/05 (0.16)
+    * some of valid/invalid W3CDTF formats supported (thanks to Yamamoto)
+
 2006/08/27 (0.15)
     * Atom 1.0 support got forward (thanks to Ole Kasper Olsen)
 

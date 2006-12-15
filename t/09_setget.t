@@ -1,6 +1,6 @@
 # ----------------------------------------------------------------
     use strict;
-    use Test::More tests => 139;
+    use Test::More tests => 145;
     BEGIN { use_ok('XML::FeedPP') };
 # ----------------------------------------------------------------
     my $ftitle = "Title of the site";
@@ -21,7 +21,8 @@
         'elem7/elem8'       =>  'ELEM08',
         'elem9/elem10'      =>  'ATTR10',
         'elem9/elem11'          =>  'ELEM10',
-        'elem9/elem12@attr12'   =>  'ELEM12'
+	'elem9/elem12@attr12'   =>  'ELEM12',
+        '@attr13'           =>  'ATTR13',
     };
 # ----------------------------------------------------------------
     my $noexists = [

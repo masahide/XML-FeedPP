@@ -36,7 +36,7 @@ SYNOPSIS
 DESCRIPTION
     XML::FeedPP module parses a RSS/RDF/Atom file, converts its format,
     marges another files, and generates a XML file. This module is a pure
-    Perl implementation and do not requires any other modules expcept for
+    Perl implementation and does not requires any other modules expcept for
     XML::FeedPP.
 
 METHODS FOR FEED

@@ -1,5 +1,8 @@
 # XML::FeedPP Changes
 
+2006/12/15 (0.17)
+    * $item->get( '@attr' ) supported (thanks to javiermm)
+
 2006/09/05 (0.16)
     * some of valid/invalid W3CDTF formats supported (thanks to Yamamoto)
 

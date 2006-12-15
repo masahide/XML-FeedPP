@@ -39,7 +39,7 @@ Merge some RSS/RDF files and convert it into Atom format.
 
 XML::FeedPP module parses a RSS/RDF/Atom file, converts its format,
 marges another files, and generates a XML file.
-This module is a pure Perl implementation and do not requires any other modules
+This module is a pure Perl implementation and does not requires any other modules
 expcept for XML::FeedPP.
 
 =head1 METHODS FOR FEED
@@ -329,7 +329,7 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw( $VERSION );
-$VERSION = "0.16";
+$VERSION = "0.17";
 
 my $RSS_VERSION  = '2.0';
 my $RDF_VERSION  = '1.0';
@@ -1621,13 +1621,17 @@ sub get {
     }
     my ( $tagname, $attr ) = split( /\@/, $key, 2 );
     return unless ref $node;
-    return unless exists $node->{$tagname};
-    if ( defined $attr ) {    # attribute
+    # return unless exists $node->{$tagname};
+    if ( $tagname eq "" && defined $attr ) {    # @attribute
+        return unless exists $node->{ '-' . $attr };
+        return $node->{ '-' . $attr };
+    }
+    elsif ( defined $attr ) {                   # node@attribute
         return unless ref $node->{$tagname};
         return unless exists $node->{$tagname}->{ '-' . $attr };
         return $node->{$tagname}->{ '-' . $attr };
     }
-    else {                    # node value
+    else {                                      # node
         return $node->{$tagname} unless ref $node->{$tagname};
         return $node->{$tagname}->{'#text'};
     }

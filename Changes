@@ -1,7 +1,11 @@
 # XML::FeedPP Changes
 
+2006/12/16 (0.19)
+    * negative index supported: get_item() remove_item() limit_item()
+    * POD updated (thanks to sierra and silver)
+
 2006/12/15 (0.17)
-    * $item->get( '@attr' ) supported (thanks to javiermm)
+    * $item->get('@attr') supported (thanks to javiermm)
 
 2006/09/05 (0.16)
     * some of valid/invalid W3CDTF formats supported (thanks to Yamamoto)
@@ -41,5 +45,6 @@
     * first release
 
 # http://groups.yahoo.com/group/xml-feedpp/
+# http://annocpan.org/dist/XML-FeedPP/
 # http://www.kawa.net/works/perl/feedpp/feedpp-e.html       (English)
 # http://www.kawa.net/works/perl/feedpp/feedpp.html#changes (Japanese)

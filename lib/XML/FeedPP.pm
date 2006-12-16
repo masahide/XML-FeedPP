@@ -1,10 +1,10 @@
 =head1 NAME
 
-XML::FeedPP -- Parse/write/merge/edit web feeds, RSS/RDF/Atom
+XML::FeedPP -- Parse/write/merge/edit RSS/RDF/Atom syndication feeds
 
 =head1 SYNOPSIS
 
-Get a RSS file and parse it.
+Get an RSS file and parse it:
 
     my $source = 'http://use.perl.org/index.rss';
     my $feed = XML::FeedPP->new( $source );
@@ -15,7 +15,7 @@ Get a RSS file and parse it.
         print "Title: ", $item->title(), "\n";
     }
 
-Generate a RDF file and save it.
+Generate an RDF file and save it:
 
     my $feed = XML::FeedPP::RDF->new();
     $feed->title( "use Perl" );
@@ -26,7 +26,7 @@ Generate a RDF file and save it.
     $item->pubDate( "2006-02-23T14:43:43+09:00" );
     $feed->to_file( "index.rdf" );
 
-Merge some RSS/RDF files and convert it into Atom format.
+Convert some RSS/RDF files to Atom format:
 
     my $feed = XML::FeedPP::Atom->new();                # create empty atom file
     $feed->merge( "rss.xml" );                          # load local RSS file
@@ -37,96 +37,103 @@ Merge some RSS/RDF files and convert it into Atom format.
 
 =head1 DESCRIPTION
 
-XML::FeedPP module parses a RSS/RDF/Atom file, converts its format,
-marges another files, and generates a XML file.
-This module is a pure Perl implementation and does not requires any other modules
-expcept for XML::FeedPP.
+XML::FeedPP is an all-purpose syndication utility that parses and
+publishes RSS, RDF, and Atom feeds. It allows you to add new content,
+merge feeds, and convert among various formats.  It is a pure Perl
+implementation and does not require any other module except for
+XML::TreePP.
 
 =head1 METHODS FOR FEED
 
-=head2  $feed = XML::FreePP->new( 'index.rss' );
+=head2  $feed = XML::FeedPP->new( 'index.rss' );
 
-This constructor method creates a instance of the XML::FeedPP.
-The format of $source must be one of the supported feed fromats: RSS, RDF or Atom.
-The first arguments is the file name on the local file system.
+This constructor method creates an XML::FeedPP feed instance. The only
+argument is the local filename.  The format of $source must be one of
+the supported feed formats -- RSS, RDF or Atom -- or execution is
+halted.
 
-=head2  $feed = XML::FreePP->new( 'http://use.perl.org/index.rss' );
+=head2  $feed = XML::FeedPP->new( 'http://use.perl.org/index.rss' );
 
-The URL on the remote web server is also available as the first argument.
-LWP::UserAgent module is required to download it.
+The URL on the remote web server is also available as the first
+argument.  The LWP::UserAgent module is required to download it.
 
-=head2  $feed = XML::FreePP->new( '<?xml?><rss version="2.0"><channel>....' );
+=head2  $feed = XML::FeedPP->new( '<?xml?><rss version="2.0"><channel>....' );
 
 The XML source code is also available as the first argument.
 
-=head2  $feed = XML::FreePP::RSS->new( $source );
+=head2  $feed = XML::FeedPP::RSS->new( $source );
 
-This constructor method creates a instance for RSS format.
-The first argument is optional.
-This method returns an empty instance when $source is not defined.
+This constructor method creates an instance for an RSS-formated feed.
+The first argument is optional, but must be valid RSS if specified.
+This method returns an empty instance when $source is undefined.
 
-=head2  $feed = XML::FreePP::RDF->new( $source );
+=head2  $feed = XML::FeedPP::RDF->new( $source );
 
-This constructor method creates a instance for RDF format.
-The first argument is optional.
-This method returns an empty instance when $source is not defined.
+This constructor method creates an instance for RDF-formatted feed.
+The first argument is optional, but must be RDF if specified.  This
+method returns an empty instance when $source is undefined.
 
-=head2  $feed = XML::FreePP::Atom->new( $source );
+=head2  $feed = XML::FeedPP::Atom->new( $source );
 
-This constructor method creates a instance for Atom format.
-The first argument is optional.
-This method returns an empty instance when $source is not defined.
+This constructor method creates an instance for an Atom-formatted
+feed.  The first argument is optional, but must be Atom if specified.
+This method returns an empty instance when $source is undefined.
 
 =head2  $feed->load( $source );
 
-This method loads a RSS/RDF/Atom file like new() method do.
+This method loads an RSS/RDF/Atom file, much like the new() method
+does.
 
 =head2  $feed->merge( $source );
 
-This method merges a RSS/RDF/Atom file into existing $feed instance.
+This method merges an RSS/RDF/Atom file into the existing $feed
+instance. Top-level metadata from the imported feed is incorporated
+only if missing from the present feed.
 
 =head2  $string = $feed->to_string( $encoding );
 
-This method generates XML source as string and returns it.
-The output $encoding is optional and the default value is 'UTF-8'.
-On Perl 5.8 and later, any encodings supported by Encode module are available.
-On Perl 5.005 and 5.6.1, four encodings supported by Jcode module are only
-available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and 'ISO-2022-JP'.
-But normaly, 'UTF-8' is recommended to the compatibilities.
+This method generates XML source as string and returns it.  The output
+$encoding is optional, and the default encoding is 'UTF-8'.  On Perl
+5.8 and later, any encodings supported by the Encode module are
+available.  On Perl 5.005 and 5.6.1, only four encodings supported by
+the Jcode module are available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and
+'ISO-2022-JP'.  'UTF-8' is recommended for overall compatibility.
 
 =head2  $feed->to_file( $filename, $encoding );
 
-This method generate a XML file.
-The output $encoding is optional and the default value is 'UTF-8'.
+This method generate an XML file.  The output $encoding is optional,
+and the default is 'UTF-8'.
 
-=head2  $item = $feed->get_item( $num );
+=head2  $item = $feed->get_item( $index );
 
-This method returns item(s) in $feed.
-If $num is defined, it returns the $num-th item's object.
-If $num is not defined on array context, it returns a array of all items.
-If $num is not defined on scalar context, it returns a number of items.
+This method returns item(s) in a $feed.
+A valid zero-based array $index returns the corresponding item in the feed.
+An invalid $index yields undef.
+If $index is undefined in array context, it returns an array of all items.
+If $index is undefined in scalar context, it returns the number of items.
 
 =head2  $item = $feed->add_item( $url );
 
 This method creates a new item/entry and returns its instance.
-First argument $link is the URL of the new item/entry.
-RSS's <item> element is a instance of XML::FeedPP::RSS::Item class.
-RDF's <item> element is a instance of XML::FeedPP::RDF::Item class.
-Atom's <entry> element is a instance of XML::FeedPP::Atom::Entry class.
+A mandatory $link argument is the URL of the new item/entry.
+RSS's <item> element is an instance of XML::FeedPP::RSS::Item class.
+RDF's <item> element is an instance of XML::FeedPP::RDF::Item class.
+Atom's <entry> element is an instance of XML::FeedPP::Atom::Entry class.
 
 =head2  $item = $feed->add_item( $srcitem );
 
-This method duplicates a item/entery and adds it to $feed.
-$srcitem is a XML::FeedPP::*::Item class's instance 
-which is returned by get_item() method above.
+This method duplicates an item/entry and adds it to $feed.  $srcitem
+is a XML::FeedPP::*::Item class's instance which is returned by the
+get_item() method, as described above.
 
-=head2  $feed->remove_item( $num );
+=head2  $feed->remove_item( $index );
 
-This method removes a item/entry from $feed.
+This method removes an item/entry from $feed, where $index is a valid
+zero-based array index.
 
 =head2  $feed->clear_item();
 
-This method removes all items/entries from $feed.
+This method removes all items/entries from the $feed.
 
 =head2  $feed->sort_item();
 
@@ -135,119 +142,119 @@ This method sorts the order of items in $feed by pubDate.
 =head2  $feed->uniq_item();
 
 This method makes items unique. The second and succeeding items
-which have a same link URL are removed.
-
-=head2  $feed->limit_item( $num );
-
-This method removes items which exceed the limit specified.
+that have the same link URL are removed.
 
 =head2  $feed->normalize();
 
-This method calls both of sort_item() method and uniq_item() method.
+This method calls both the sort_item() and uniq_item() methods.
+
+=head2  $feed->limit_item( $num );
+
+Removes items in excess of the specified numeric limit. Items at the
+end of the list are removed. When preceded by sort_item() or
+normalize(), this deletes more recent items.
 
 =head2  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
 
-This code adds a XML namespace at the document root of the feed.
+Adds an XML namespace at the document root of the feed.
 
 =head2  $url = $feed->xmlns( 'xmlns:media' );
 
-This code returns the URL of the specified XML namespace.
+Returns the URL of the specified XML namespace.
 
 =head2  @list = $feed->xmlns();
 
-This code returns the list of all XML namespace used in $feed.
+Returns the list of all XML namespaces used in $feed.
 
 =head1  METHODS FOR CHANNEL
 
 =head2  $feed->title( $text );
 
-This method sets/gets the feed's <title> value.
-This method returns the current value when the $title is not defined.
+This method sets/gets the feed's <title> value, returning the current
+value when $title is undefined.
 
 =head2  $feed->description( $html );
 
-This method sets/gets the feed's <description> value in HTML.
-This method returns the current value when the $html is not defined.
+This method sets/gets the feed's <description> value in plain text or
+HTML, returning the current value when $html is undefined.
 
 =head2  $feed->pubDate( $date );
 
-This method sets/gets the feed's <pubDate> value for RSS,
-<dc:date> value for RDF, or <modified> value for Atom.
-This method returns the current value when the $date is not defined.
-See also the DATE/TIME FORMATS section.
+This method sets/gets the feed's <pubDate> value for RSS, <dc:date>
+value for RDF, or <modified> value for Atom.  It returns the current
+value when $date is undefined.  See also the DATE/TIME FORMATS
+section.
 
 =head2  $feed->copyright( $text );
 
-This method sets/gets the feed's <copyright> value for RSS/Atom,
-or <dc:rights> element for RDF.
-This method returns the current value when the $text is not defined.
+This method sets/gets the feed's <copyright> value for RSS/Atom, or
+<dc:rights> element for RDF.  It returns the current value when $text
+is undefined.
 
 =head2  $feed->link( $url );
 
-This method sets/gets the URL of the web site
-as the feed's <link> value for RSS/RDF/Atom.
-This method returns the current value when the $url is not defined.
+This method sets/gets the URL of the web site as the feed's <link>
+value for RSS/RDF/Atom.  It returns the current value when the $url is
+undefined.
 
 =head2  $feed->language( $lang );
 
 This method sets/gets the feed's <language> value for RSS,
-<dc:language> element for RDF, or <feed xml:lang=""> attribute for Atom.
-This method returns the current value when the $lang is not defined.
+<dc:language> element for RDF, or <feed xml:lang=""> attribute for
+Atom.  It returns the current value when the $lang is undefined.
 
 =head2  $feed->image( $url, $title, $link, $description, $width, $height )
 
-This method sets/gets the feed's <image> value and its child nodes
-for RSS/RDF. This method is ignored for Atom.
-This method returns the current values as array when any arguments are not defined.
+This method sets/gets the feed's <image> value and its child nodes for
+RSS/RDF, returning a list of current values when any arguments are
+undefined. This method is ignored for Atom feeds.  
 
 =head1  METHODS FOR ITEM
 
 =head2  $item->title( $text );
 
-This method sets/gets the item's <title> value.
-This method returns the current value when the $text is not defined.
+This method sets/gets the item's <title> value, returning the current
+value when the $text is undefined.
 
 =head2  $item->description( $html );
 
-This method sets/gets the item's <description> value in HTML.
-This method returns the current value when the $text is not defined.
+This method sets/gets the item's <description> value in HTML or plain
+text, returning the current value when $text is undefined.
 
 =head2  $item->pubDate( $date );
 
-This method sets/gets the item's <pubDate> value for RSS,
-<dc:date> element for RDF, or <issued> element for Atom.
-This method returns the current value when the $text is not defined.
-See also the DATE/TIME FORMATS section.
+This method sets/gets the item's <pubDate> value for RSS, RDF's
+<dc:date> element, or Atom's <issued> element.  This method returns
+the current value when $date is undefined.  See also the DATE/TIME
+FORMATS section.
 
 =head2  $item->category( $text );
 
-This method sets/gets the item's <category> value for RSS/RDF.
-This method is ignored for Atom.
-This method returns the current value when the $text is not defined.
+This method sets/gets the item's <category> value for RSS/RDF, but is
+ignored for Atom.  It returns the current value when $text is
+undefined.
 
 =head2  $item->author( $text );
 
-This method sets/gets the item's <author> value for RSS,
-<creator> value for RDF, or <author><name> value for Atom.
-This method returns the current value when the $text is not defined.
+This method sets/gets the item's <author> value for RSS, <creator>
+value for RDF, or <author><name> value for Atom.  It returns the
+current value when $text is undefined.
 
 =head2  $item->guid( $guid, isPermaLink => $bool );
 
-This method sets/gets the item's <guid> value for RSS
-or <id> value for Atom.
-This method is ignored for RDF.
-The second argument is optional.
-This method returns the current value when the $guid is not defined.
+This method sets/gets the item's <guid> value for RSS or <id> value
+for Atom; it is ignored for RDF.  The second argument is optional.
+This method returns the current value when $guid is undefined.
 
 =head2  $item->set( $key => $value, ... );
 
-This method sets some node values or attributes.
-See also the next section: GENERAL SET/GET
+This method sets customized node values or attributes.  See also the
+GENERAL SET/GET section that follows.
 
 =head2  $value = $item->get( $key );
 
-This method returns the node value or attribute.
-See also the next section: GENERAL SET/GET
+This method returns the node value or attribute.  See also the GENERAL
+SET/GET section that follows.
 
 =head2  $link = $item->link();
 
@@ -255,26 +262,25 @@ This method returns the item's <link> value.
 
 =head1  GENERAL SET/GET
 
-XML::FeedPP understands only <rdf:*>, <dc:*> modules
-and RSS/RDF/ATOM's default namespaces.
-There are NO native methods for any other external modules,
-such as <media:*>.
-But set()/get() methods are available to get/set the value of
-any elements or attributes for these modules.
+XML::FeedPP understands only <rdf:*>, <dc:*> modules and
+RSS/RDF/ATOM's default namespaces.  There are NO native methods for
+any other external modules, such as <media:*>.  But set()/get()
+methods are available to get/set the value of any elements or
+attributes for these modules.
 
 =head2  $item->set( 'module:name' => $value );
 
-This code sets the value of the child node:
+This sets the value of the child node:
 <item><module:name>$value
 
 =head2  $item->set( 'module:name@attr' => $value );
 
-This code sets the value of the child node's attribute:
+This sets the value of the child node's attribute:
 <item><module:name attr="$value">
 
 =head2  $item->set( '@attr' => $value );
 
-This code sets the value of the item's attribute:
+This sets the value of the item's attribute: 
 <item attr="$value">
 
 =head2  $item->set( 'hoge/pomu@hare' => $value );
@@ -284,30 +290,31 @@ This code sets the value of the child node's child node's attribute:
 
 =head1  DATE/TIME FORMATS
 
-XML::FeedPP allows you to describe date/time by three formats following:
+XML::FeedPP allows you to describe date/time using any of the three
+following formats:
 
 =head2  $date = "Thu, 23 Feb 2006 14:43:43 +0900";
 
-The first format is the format preferred for the HTTP protocol.
-This is the native format of RSS 2.0 and one of the formats defined by RFC 1123.
+This is the HTTP protocol's preferred format and RSS 2.0's native
+format, as defined by RFC 1123.
 
 =head2  $date = "2006-02-23T14:43:43+09:00";
 
-The second format is the W3CDTF format.
-This is the native format of RDF and one of the formats defined by ISO 8601.
+W3CDTF is the native format of RDF, as defined by ISO 8601.
 
 =head2  $date = 1140705823;
 
-The last format is the number of seconds since the epoch, 1970-01-01T00:00:00Z.
-You know, this is the native format of Perl's time() function.
+The last format is the number of seconds since the epoch,
+1970-01-01T00:00:00Z.  You know, this is the native format of Perl's
+time() function.
 
 =head1 MODULE DEPENDENCIES
 
-XML::FeedPP module requires only XML::TreePP module,
-which is a pure Perl implementation as well.
-LWP::UserAgent module is also required to download a file from remote web server.
-Jcode module is required to convert Japanese encodings on Perl 5.006 and 5.6.1.
-Jcode module is NOT required on Perl 5.8.x and later.
+XML::FeedPP requires only XML::TreePP, which likewise is a pure Perl
+implementation.  The standard LWP::UserAgent module is required to
+download feeds from remote web servers.  The Jcode module is required
+to convert Japanese encodings on Perl 5.006 and 5.6.1, but is NOT
+required on Perl 5.8.x and later.
 
 =head1 AUTHOR
 
@@ -315,9 +322,9 @@ Yusuke Kawasaki, http://www.kawa.net/
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2006 Yusuke Kawasaki.  All rights reserved.  This program
-is free software; you can redistribute it and/or modify it under the same
-terms as Perl itself.
+Copyright (c) 2006 Yusuke Kawasaki.  All rights reserved.  This
+program is free software; you can redistribute it and/or modify it
+under the same terms as Perl itself.
 
 =cut
 
@@ -329,7 +336,7 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw( $VERSION );
-$VERSION = "0.17";
+$VERSION = "0.19";
 
 my $RSS_VERSION  = '2.0';
 my $RDF_VERSION  = '1.0';
@@ -430,7 +437,7 @@ sub merge {
 
 sub merge_channel {
     my $self   = shift;
-    my $target = shift;
+    my $target = shift or return;
     if ( ref $self eq ref $target ) {
         $self->merge_native_channel($target);
     }
@@ -441,7 +448,7 @@ sub merge_channel {
 
 sub merge_item {
     my $self   = shift;
-    my $target = shift;
+    my $target = shift or return;
     foreach my $item ( $target->get_item() ) {
         $self->add_item( $item );
     }
@@ -449,7 +456,7 @@ sub merge_item {
 
 sub merge_common_channel {
     my $self   = shift;
-    my $target = shift;
+    my $target = shift or return;
 
     my $title1 = $self->title();
     my $title2 = $target->title();
@@ -494,7 +501,7 @@ sub merge_common_channel {
 
 sub add_clone_item {
     my $self = shift;
-    my $srcitem = shift;
+    my $srcitem = shift or return;
     my $link = $srcitem->link() or return;
     my $dstitem = $self->add_item( $link );
 
@@ -668,7 +675,7 @@ sub init_feed {
 
 sub merge_native_channel {
     my $self = shift;
-    my $tree = shift;
+    my $tree = shift or next;
 
     XML::FeedPP::Util::merge_hash( $self->{rss}, $tree->{rss}, qw( channel ) );
     XML::FeedPP::Util::merge_hash(
@@ -704,7 +711,7 @@ sub remove_item {
     my $list   = $self->{rss}->{channel}->{item} or return;
     my @deleted;
 
-    if ( $remove =~ /^\d+/ ) {
+    if ( $remove =~ /^-?\d+/ ) {
         @deleted = splice( @$list, $remove, 1 );
     }
     else {
@@ -760,7 +767,12 @@ sub limit_item {
     my $self  = shift;
     my $limit = shift;
     my $list  = $self->{rss}->{channel}->{item} or return;
-    $#$list = $limit - 1 if ( $limit < scalar @$list );
+    if ( $limit > 0 && $limit < scalar @$list ) {
+        @$list = splice( @$list, 0, $limit );   # remove from end
+    }
+    elsif ( $limit < 0 && -$limit < scalar @$list ) {
+        @$list = splice( @$list, $limit );      # remove from start
+    }
     scalar @$list;
 }
 
@@ -935,7 +947,7 @@ sub init_feed {
 
 sub merge_native_channel {
     my $self = shift;
-    my $tree = shift;
+    my $tree = shift or next;
 
     XML::FeedPP::Util::merge_hash( $self->{'rdf:RDF'}, $tree->{'rdf:RDF'},
         qw( channel item ) );
@@ -982,7 +994,7 @@ sub remove_item {
     my $list   = $self->{'rdf:RDF'}->{item} or return;
     my @deleted;
 
-    if ( $remove =~ /^\d+/ ) {
+    if ( $remove =~ /^-?\d+/ ) {
         @deleted = splice( @$list, $remove, 1 );
     }
     else {
@@ -1041,7 +1053,12 @@ sub limit_item {
     my $self  = shift;
     my $limit = shift;
     my $list  = $self->{'rdf:RDF'}->{item} or return;
-    $#$list = $limit - 1 if ( $limit < scalar @$list );
+    if ( $limit > 0 && $limit < scalar @$list ) {
+        @$list = splice( @$list, 0, $limit );   # remove from end
+    }
+    elsif ( $limit < 0 && -$limit < scalar @$list ) {
+        @$list = splice( @$list, $limit );      # remove from start
+    }
     $self->__refresh_items();
 }
 
@@ -1196,7 +1213,7 @@ sub init_feed {
 
 sub merge_native_channel {
     my $self = shift;
-    my $tree = shift;
+    my $tree = shift or next;
 
     XML::FeedPP::Util::merge_hash( $self->{feed}, $tree->{feed}, qw( entry ) );
 }
@@ -1228,7 +1245,7 @@ sub remove_item {
     my $list   = $self->{feed}->{entry} or return;
     my @deleted;
 
-    if ( $remove =~ /^\d+/ ) {
+    if ( $remove =~ /^-?\d+/ ) {
         @deleted = splice( @$list, $remove, 1 );
     }
     else {
@@ -1284,7 +1301,12 @@ sub limit_item {
     my $self  = shift;
     my $limit = shift;
     my $list  = $self->{feed}->{entry} or return;
-    $#$list = $limit - 1 if ( $limit < scalar @$list );
+    if ( $limit > 0 && $limit < scalar @$list ) {
+        @$list = splice( @$list, 0, $limit );   # remove from end
+    }
+    elsif ( $limit < 0 && -$limit < scalar @$list ) {
+        @$list = splice( @$list, $limit );      # remove from start
+    }
     scalar @$list;
 }
 

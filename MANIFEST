@@ -27,6 +27,10 @@ t/18_image_atom.t
 t/19_invalid_w3cdtf.t
 t/20_limit_item.t
 t/21_negative_item.t
+t/22_init_elements.t
+t/23_match_item.t
+t/24_get_epoch.t
+t/25_sort_timezone.t
 t/40_dumpjson_pp.t
 t/41_dumpjson_syck.t
 t/42_dumpjson_slim.t

@@ -68,6 +68,10 @@ METHODS FOR FEED
     The first argument is optional, but must be Atom if specified. This
     method returns an empty instance when $source is undefined.
 
+  $feed = XML::FeedPP::RSS->new( link => $link, title => $tile, ... );
+    This constructor method creates an empty instance and sets <link>,
+    <title> elements etc.
+
   $feed->load( $source );
     This method loads an RSS/RDF/Atom file, much like the new() method does.
 
@@ -88,13 +92,6 @@ METHODS FOR FEED
     This method generate an XML file. The output $encoding is optional, and
     the default is 'UTF-8'.
 
-  $item = $feed->get_item( $index );
-    This method returns item(s) in a $feed. A valid zero-based array $index
-    returns the corresponding item in the feed. An invalid $index yields
-    undef. If $index is undefined in array context, it returns an array of
-    all items. If $index is undefined in scalar context, it returns the
-    number of items.
-
   $item = $feed->add_item( $url );
     This method creates a new item/entry and returns its instance. A
     mandatory $link argument is the URL of the new item/entry. RSS's <item>
@@ -107,6 +104,22 @@ METHODS FOR FEED
     XML::FeedPP::*::Item class's instance which is returned by the
     get_item() method, as described above.
 
+  $item = $feed->add_item( link => $link, title => $tile, ... );
+    This method creates an new item/entry and sets <link>, <title> elements
+    etc.
+
+  $item = $feed->get_item( $index );
+    This method returns item(s) in a $feed. A valid zero-based array $index
+    returns the corresponding item in the feed. An invalid $index yields
+    undef. If $index is undefined in array context, it returns an array of
+    all items. If $index is undefined in scalar context, it returns the
+    number of items.
+
+  @items = $feed->match_item( link => qr/.../, title => qr/.../, ... );
+    This method finds item(s) which match all regular expressions given.
+    This method returns an array of all matched items in array context. This
+    method returns the first matched item in scalar context.
+
   $feed->remove_item( $index );
     This method removes an item/entry from $feed, where $index is a valid
     zero-based array index.
@@ -115,7 +128,7 @@ METHODS FOR FEED
     This method removes all items/entries from the $feed.
 
   $feed->sort_item();
-    This method sorts the order of items in $feed by pubDate.
+    This method sorts the order of items in $feed by <pubDate>.
 
   $feed->uniq_item();
     This method makes items unique. The second and succeeding items that

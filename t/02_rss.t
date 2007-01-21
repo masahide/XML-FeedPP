@@ -11,9 +11,9 @@
     my $flink  = "http://www.kawa.net/";
     my $flang  = "ja";
 # ----------------------------------------------------------------
-    my $link1 = "http://www.perl.org/";
+    my $link1  = "http://www.perl.org/";
     my $link2  = "http://use.perl.org/";
-    my $link3 = "http://cpan.perl.org/";
+    my $link3  = "http://cpan.perl.org/";
     my $title1 = "The Perl Directory - perl.org";
     my $title2 = "use Perl: All the Perl that's Practical to Extract and Report";
     my $title3 = "The Comprehensive Perl Archive Network";
@@ -68,7 +68,7 @@
 # ----------------------------------------------------------------
     my $item4 = $feed2->get_item( 0 );
 # ----------------------------------------------------------------
-    is( $item4->link(),             $link1,     "Item->title()" );
+    is( $item4->link(),             $link1,     "Item->link()" );
     is( $item4->title(),            $title1,    "Item->title()" );
     is( $item4->pubDate(),          $idateB,    "Item->pubDate()" );
     is( $item4->description(),      $idesc,     "Item->description()" );

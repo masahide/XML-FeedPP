@@ -79,6 +79,11 @@ This constructor method creates an instance for an Atom-formatted
 feed.  The first argument is optional, but must be Atom if specified.
 This method returns an empty instance when $source is undefined.
 
+=head2  $feed = XML::FeedPP::RSS->new( link => $link, title => $tile, ... );
+
+This constructor method creates an empty instance and sets <link>,
+<title> elements etc.
+
 =head2  $feed->load( $source );
 
 This method loads an RSS/RDF/Atom file, much like the new() method
@@ -104,14 +109,6 @@ the Jcode module are available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and
 This method generate an XML file.  The output $encoding is optional,
 and the default is 'UTF-8'.
 
-=head2  $item = $feed->get_item( $index );
-
-This method returns item(s) in a $feed.
-A valid zero-based array $index returns the corresponding item in the feed.
-An invalid $index yields undef.
-If $index is undefined in array context, it returns an array of all items.
-If $index is undefined in scalar context, it returns the number of items.
-
 =head2  $item = $feed->add_item( $url );
 
 This method creates a new item/entry and returns its instance.
@@ -126,6 +123,24 @@ This method duplicates an item/entry and adds it to $feed.  $srcitem
 is a XML::FeedPP::*::Item class's instance which is returned by the
 get_item() method, as described above.
 
+=head2  $item = $feed->add_item( link => $link, title => $tile, ... );
+
+This method creates an new item/entry and sets <link>, <title> elements etc.
+
+=head2  $item = $feed->get_item( $index );
+
+This method returns item(s) in a $feed.
+A valid zero-based array $index returns the corresponding item in the feed.
+An invalid $index yields undef.
+If $index is undefined in array context, it returns an array of all items.
+If $index is undefined in scalar context, it returns the number of items.
+
+=head2  @items = $feed->match_item( link => qr/.../, title => qr/.../, ... );
+
+This method finds item(s) which match all regular expressions given. 
+This method returns an array of all matched items in array context.
+This method returns the first matched item in scalar context.
+
 =head2  $feed->remove_item( $index );
 
 This method removes an item/entry from $feed, where $index is a valid
@@ -137,7 +152,7 @@ This method removes all items/entries from the $feed.
 
 =head2  $feed->sort_item();
 
-This method sorts the order of items in $feed by pubDate.
+This method sorts the order of items in $feed by <pubDate>.
 
 =head2  $feed->uniq_item();
 
@@ -207,7 +222,7 @@ Atom.  It returns the current value when the $lang is undefined.
 
 This method sets/gets the feed's <image> value and its child nodes for
 RSS/RDF, returning a list of current values when any arguments are
-undefined. This method is ignored for Atom feeds.  
+undefined. This method is ignored for Atom feeds.
 
 =head1  METHODS FOR ITEM
 
@@ -280,7 +295,7 @@ This sets the value of the child node's attribute:
 
 =head2  $item->set( '@attr' => $value );
 
-This sets the value of the item's attribute: 
+This sets the value of the item's attribute:
 <item attr="$value">
 
 =head2  $item->set( 'hoge/pomu@hare' => $value );
@@ -335,33 +350,74 @@ use Carp;
 use Time::Local;
 use XML::TreePP;
 
-use vars qw( $VERSION );
-$VERSION = "0.19";
+use vars qw(
+    $VERSION        $RSS_VERSION    $RDF_VERSION    $ATOM_VERSION
+    $XMLNS_RDF      $XMLNS_RSS      $XMLNS_DC       $XMLNS_ATOM
+    $XMLNS_NOCOPY   $TREEPP_OPTIONS $MIME_TYPES
+    $FEED_METHODS   $ITEM_METHODS
+);
 
-my $RSS_VERSION  = '2.0';
-my $RDF_VERSION  = '1.0';
-my $ATOM_VERSION = '0.3';
-my $XMLNS_RDF    = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
-my $XMLNS_RSS    = 'http://purl.org/rss/1.0/';
-my $XMLNS_DC     = 'http://purl.org/dc/elements/1.1/';
-my $XMLNS_ATOM   = 'http://purl.org/atom/ns#';
-my $XMLNS_NOCOPY = [qw( xmlns xmlns:rdf xmlns:dc xmlns:atom )];
+$VERSION = "0.21";
 
-my $TREEPP_OPTIONS = {
+$RSS_VERSION  = '2.0';
+$RDF_VERSION  = '1.0';
+$ATOM_VERSION = '0.3';
+$XMLNS_RDF    = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
+$XMLNS_RSS    = 'http://purl.org/rss/1.0/';
+$XMLNS_DC     = 'http://purl.org/dc/elements/1.1/';
+$XMLNS_ATOM   = 'http://purl.org/atom/ns#';
+$XMLNS_NOCOPY = [qw( xmlns xmlns:rdf xmlns:dc xmlns:atom )];
+
+$TREEPP_OPTIONS = {
     force_array => [qw( item rdf:li entry )],
     first_out   => [qw( -rel -type )],
     last_out    => [qw( description item items entry -width -height )],
     user_agent  => "XML-FeedPP/$VERSION ",
 };
 
+$MIME_TYPES = { reverse qw(
+    image/bmp                       bmp
+    image/gif                       gif
+    image/jpeg                      jpeg
+    image/jpeg                      jpg
+    image/png                       png
+    image/svg+xml                   svg
+    image/x-icon                    ico
+    image/x-xbitmap                 xbm
+    image/x-xpixmap                 xpm
+)};
+
+$FEED_METHODS = [qw(
+    title
+    description
+    language
+    copyright
+    link
+    pubDate
+    image
+    set
+)];
+
+$ITEM_METHODS = [qw(
+    title
+    description
+    category
+    author
+    link
+    guid
+    pubDate
+    image
+    set
+)];
+
 sub new {
     my $package = shift;
-    my $source  = shift;
+    my( $init, $source, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
     Carp::croak "No feed source" unless defined $source;
 
     my $self  = {};
     bless $self, $package;
-    $self->load($source, @_);
+    $self->load($source, @rest);
 
     if ( exists $self->{rss} ) {
         XML::FeedPP::RSS->feed_bless($self);
@@ -377,6 +433,7 @@ sub new {
         Carp::croak "Invalid feed format: $root";
     }
     $self->init_feed();
+    $self->elements(@$init) if ref $init;
     $self;
 }
 
@@ -488,7 +545,7 @@ sub merge_common_channel {
 
     my @xmlns1 = $self->xmlns();
     my @xmlns2 = $target->xmlns();
-    my $xmlchk = { map { $_ => 1 } @xmlns1, @$XMLNS_NOCOPY };
+    my $xmlchk = { map { $_ => 1 } @xmlns1, @$XML::FeedPP::XMLNS_NOCOPY };
     foreach my $ns (@xmlns2) {
         next if exists $xmlchk->{$ns};
         $self->xmlns( $ns, $target->xmlns($ns) );
@@ -595,6 +652,12 @@ sub get_pubDate_rfc1123 {
     XML::FeedPP::Util::get_rfc1123($date);
 }
 
+sub get_pubDate_epoch {
+    my $self = shift;
+    my $date = $self->get_pubDate_native();
+    XML::FeedPP::Util::get_epoch($date);
+}
+
 sub call {
     my $self = shift;
     my $name = shift;
@@ -608,6 +671,47 @@ sub call {
     } unless defined $class->VERSION;
     Carp::croak "$class failed: $@" if $@;
     return $class->run( $self, @_ );
+}
+
+sub elements {
+    my $self = shift;
+    my $args = [ @_ ];
+    my $methods = { map {$_=>1} @$FEED_METHODS };
+    while ( my $key = shift @$args ) {
+        my $val = shift @$args;
+        if ( $methods->{$key} ) {
+            $self->$key( $val );
+        } else {
+            $self->set( $key, $val );
+        }
+    }
+}
+
+sub match_item {
+    my $self = shift;
+    my @list = $self->get_item();
+    return unless scalar @list;
+    my $methods = { map {$_=>1} @$ITEM_METHODS };
+    my $args = [ @_ ];
+    my $out = [];
+    foreach my $item ( @list ) {
+        my $unmatch = 0;
+        my $i = 0;
+        while( 1 ) {
+            my $key  = $args->[$i++] or last;
+            my $test = $args->[$i++];
+            my $got  = $methods->{$key} ? $item->$key() : $item->get( $key );
+            unless ( $got =~ $test ) {
+                $unmatch ++;
+                last;
+            }
+        }
+        unless ( $unmatch ) {
+            return $item unless wantarray;
+            push( @$out, $item );
+        }
+    }
+    @$out;
 }
 
 # ----------------------------------------------------------------
@@ -629,6 +733,21 @@ use vars qw( @ISA );
 
 *get_pubDate_w3cdtf  = \&XML::FeedPP::get_pubDate_w3cdtf;   # import
 *get_pubDate_rfc1123 = \&XML::FeedPP::get_pubDate_rfc1123;
+*get_pubDate_epoch   = \&XML::FeedPP::get_pubDate_epoch;
+
+sub elements {
+    my $self = shift;
+    my $args = [ @_ ];
+    my $methods = { map {$_=>1} @$XML::FeedPP::ITEM_METHODS };
+    while ( my $key = shift @$args ) {
+        my $val = shift @$args;
+        if ( $methods->{$key} ) {
+            $self->$key( $val );
+        } else {
+            $self->set( $key, $val );
+        }
+    }
+}
 
 # ----------------------------------------------------------------
 package XML::FeedPP::RSS;
@@ -638,16 +757,18 @@ use vars qw( @ISA );
 
 sub new {
     my $package = shift;
-    my $source  = shift;
+    my( $init, $source, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
+
     my $self    = {};
     bless $self, $package;
     if ( defined $source ) {
-        $self->load($source, @_);
+        $self->load($source, @rest);
         if ( !ref $self || !ref $self->{rss} ) {
             Carp::croak "Invalid RSS format: $source";
         }
     }
     $self->init_feed();
+    $self->elements(@$init) if ref $init;
     $self;
 }
 
@@ -655,7 +776,7 @@ sub init_feed {
     my $self = shift or return;
 
     $self->{rss}               ||= {};
-    $self->{rss}->{'-version'} ||= $RSS_VERSION;
+    $self->{rss}->{'-version'} ||= $XML::FeedPP::RSS_VERSION;
 
     $self->{rss}->{channel} ||= XML::FeedPP::Element->new();
     XML::FeedPP::Element->ref_bless( $self->{rss}->{channel} );
@@ -687,15 +808,16 @@ sub merge_native_channel {
 
 sub add_item {
     my $self = shift;
-    my $link = shift;
+    my( $init, $link, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
 
-    Carp::croak "add_item needs a argument" unless defined $link;
+    Carp::croak "add_item needs an argument" if ( ! ref $init && ! $link );
     if ( ref $link ) {
         return $self->add_clone_item( $link );
     }
 
-    my $item = XML::FeedPP::RSS::Item->new();
-    $item->link($link);
+    my $item = XML::FeedPP::RSS::Item->new(@rest);
+    $item->link($link) if $link;
+    $item->elements(@$init) if ref $init;
     push( @{ $self->{rss}->{channel}->{item} }, $item );
     $item;
 }
@@ -740,15 +862,12 @@ sub get_item {
 sub sort_item {
     my $self = shift;
     my $list = $self->{rss}->{channel}->{item} or return;
-    my @http = map { exists $_->{pubDate} ? $_->{pubDate} : "" } @$list;
-    my @w3c  = map { exists $_->{pubDate} ? $_->pubDate() : "" } @$list;
-    my %cache;
-    @cache{@http} = @w3c;
-    @$list = sort {
-             exists $a->{pubDate}
-          && exists $b->{pubDate}
-          && $cache{ $b->{pubDate} } cmp $cache{ $a->{pubDate} }
-    } @$list;
+    my $epoch = [ map { $_->get_pubDate_epoch() } @$list ];
+    my $sorted = [ map { $list->[$_] } sort {
+        $epoch->[$b] <=> $epoch->[$a] 
+    } 0 .. $#$list ];
+    @$list = @$sorted;
+    scalar @$list;
 }
 
 sub uniq_item {
@@ -761,6 +880,7 @@ sub uniq_item {
         push( @$uniq, $item ) unless $check->{$link}++;
     }
     @$list = @$uniq;
+    scalar @$list;
 }
 
 sub limit_item {
@@ -900,16 +1020,18 @@ use vars qw( @ISA );
 
 sub new {
     my $package = shift;
-    my $source  = shift;
+    my( $init, $source, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
+
     my $self    = {};
     bless $self, $package;
     if ( defined $source ) {
-        $self->load($source, @_);
+        $self->load($source, @rest);
         if ( !ref $self || !ref $self->{'rdf:RDF'} ) {
             Carp::croak "Invalid RDF format: $source";
         }
     }
     $self->init_feed();
+    $self->elements(@$init) if ref $init;
     $self;
 }
 
@@ -917,9 +1039,9 @@ sub init_feed {
     my $self = shift or return;
 
     $self->{'rdf:RDF'} ||= {};
-    $self->xmlns( 'xmlns'     => $XMLNS_RSS );
-    $self->xmlns( 'xmlns:rdf' => $XMLNS_RDF );
-    $self->xmlns( 'xmlns:dc'  => $XMLNS_DC );
+    $self->xmlns( 'xmlns'     => $XML::FeedPP::XMLNS_RSS );
+    $self->xmlns( 'xmlns:rdf' => $XML::FeedPP::XMLNS_RDF );
+    $self->xmlns( 'xmlns:dc'  => $XML::FeedPP::XMLNS_DC );
 
     $self->{'rdf:RDF'}->{channel} ||= XML::FeedPP::Element->new();
     XML::FeedPP::Element->ref_bless( $self->{'rdf:RDF'}->{channel} );
@@ -960,9 +1082,9 @@ sub merge_native_channel {
 
 sub add_item {
     my $self = shift;
-    my $link = shift;
+    my( $init, $link, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
 
-    Carp::croak "add_item needs a argument" unless defined $link;
+    Carp::croak "add_item needs an argument" if ( ! ref $init && ! $link );
     if ( ref $link ) {
         return $self->add_clone_item( $link );
     }
@@ -975,8 +1097,9 @@ sub add_item {
         $rdfli
     );
 
-    my $item = XML::FeedPP::RDF::Item->new(@_);
-    $item->link($link);
+    my $item = XML::FeedPP::RDF::Item->new(@rest);
+    $item->link($link) if $link;
+    $item->elements(@$init) if ref $init;
     push( @{ $self->{'rdf:RDF'}->{item} }, $item );
 
     $item;
@@ -1025,14 +1148,11 @@ sub get_item {
 sub sort_item {
     my $self = shift;
     my $list = $self->{'rdf:RDF'}->{item} or return;
-    $list = [
-        sort {
-                 exists $a->{"dc:date"}
-              && exists $b->{"dc:date"}
-              && $b->{"dc:date"} cmp $a->{"dc:date"}
-          } @$list
-    ];
-    $self->{'rdf:RDF'}->{item} = $list;
+    my $epoch = [ map { $_->get_pubDate_epoch() } @$list ];
+    my $sorted = [ map { $list->[$_] } sort {
+        $epoch->[$b] <=> $epoch->[$a] 
+    } 0 .. $#$list ];
+    @$list = @$sorted;
     $self->__refresh_items();
 }
 
@@ -1177,16 +1297,18 @@ use vars qw( @ISA );
 
 sub new {
     my $package = shift;
-    my $source  = shift;
+    my( $init, $source, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
+
     my $self    = {};
     bless $self, $package;
     if ( defined $source ) {
-        $self->load($source, @_);
+        $self->load($source, @rest);
         if ( !ref $self || !ref $self->{feed} ) {
             Carp::croak "Invalid Atom format: $source";
         }
     }
     $self->init_feed();
+    $self->elements(@$init) if ref $init;
     $self;
 }
 
@@ -1196,8 +1318,8 @@ sub init_feed {
     $self->{feed} ||= XML::FeedPP::Element->new();
     XML::FeedPP::Element->ref_bless( $self->{feed} );
 
-    $self->xmlns( 'xmlns' => $XMLNS_ATOM );
-    $self->{feed}->{'-version'} ||= $ATOM_VERSION;
+    $self->xmlns( 'xmlns' => $XML::FeedPP::XMLNS_ATOM );
+    $self->{feed}->{'-version'} ||= $XML::FeedPP::ATOM_VERSION;
 
     $self->{feed}->{entry} ||= [];
     if ( UNIVERSAL::isa( $self->{feed}->{entry}, "HASH" ) ) {
@@ -1220,15 +1342,16 @@ sub merge_native_channel {
 
 sub add_item {
     my $self = shift;
-    my $link = shift;
+    my( $init, $link, @rest ) = &XML::FeedPP::Util::param_even_odd(@_);
 
-    Carp::croak "add_item needs a argument" unless defined $link;
+    Carp::croak "add_item needs an argument" if ( ! ref $init && ! $link );
     if ( ref $link ) {
         return $self->add_clone_item( $link );
     }
 
-    my $item = XML::FeedPP::Atom::Entry->new(@_);
-    $item->link($link);
+    my $item = XML::FeedPP::Atom::Entry->new(@rest);
+    $item->link($link) if $link;
+    $item->elements(@$init) if ref $init;
     push( @{ $self->{feed}->{entry} }, $item );
 
     $item;
@@ -1274,14 +1397,11 @@ sub get_item {
 sub sort_item {
     my $self = shift;
     my $list = $self->{feed}->{entry} or return;
-    $list = [
-        sort {
-                 exists $a->{issued}
-              && exists $b->{issued}
-              && $b->{issued} cmp $a->{issued}
-          } @$list
-    ];
-    $self->{feed}->{entry} = $list;
+    my $epoch = [ map { $_->get_pubDate_epoch() } @$list ];
+    my $sorted = [ map { $list->[$_] } sort {
+        $epoch->[$b] <=> $epoch->[$a] 
+    } 0 .. $#$list ];
+    @$list = @$sorted;
     scalar @$list;
 }
 
@@ -1409,28 +1529,17 @@ sub image {
     $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
     my $icon = (
         grep {
-               ref $_ 
-            && exists $_->{'-rel'} 
+               ref $_
+            && exists $_->{'-rel'}
             && ($_->{'-rel'} eq "icon" )
         } @$link
     )[0];
 
-    my $MIME_TYPES = { reverse qw(
-        image/bmp                       bmp
-        image/gif                       gif
-        image/jpeg                      jpeg
-        image/jpeg                      jpg
-        image/png                       png
-        image/svg+xml                   svg
-        image/x-icon                    ico
-        image/x-xbitmap                 xbm
-        image/x-xpixmap                 xpm
-    )};
-    my $rext = join( "|", map {"\Q$_\E"} keys %$MIME_TYPES );
+    my $rext = join( "|", map {"\Q$_\E"} keys %$XML::FeedPP::MIME_TYPES );
 
     if ( defined $href ) {
         my $ext = ( $href =~ m#[^/]\.($rext)(\W|$)#i )[0];
-        my $type = $MIME_TYPES->{$ext} if $ext;
+        my $type = $XML::FeedPP::MIME_TYPES->{$ext} if $ext;
 
         if ( ref $icon ) {
             $icon->{'-href'}  = $href;
@@ -1478,7 +1587,7 @@ sub title {
 sub description {
     my $self = shift;
     my $desc = shift;
-    return $self->get_value('summary') 
+    return $self->get_value('summary')
         || $self->get_value('content') unless defined $desc;
     $self->set_value(
         'content' => $desc,
@@ -1688,7 +1797,7 @@ sub get_value {
     return $self->{$elem}->{'#text'} if exists $self->{$elem}->{'#text'};
     # a hack for atom: <content type="xhtml"><div>...</div></content>
     my $child = [ grep { /^[^\-\#]/ } keys %{$self->{$elem}} ];
-    if ( exists $self->{$elem}->{'-type'} 
+    if ( exists $self->{$elem}->{'-type'}
         && ($self->{$elem}->{'-type'} eq "xhtml")
         && scalar @$child == 1) {
         return &get_value( $self->{$elem}, $child->[0] );
@@ -1754,6 +1863,21 @@ my ( @DoW, @MoY, %MoY );
 @DoW = qw(Sun Mon Tue Wed Thu Fri Sat);
 @MoY = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec);
 @MoY{ map { uc($_) } @MoY } = ( 1 .. 12 );
+my $tz_now = time();
+my $tz_offset = Time::Local::timegm( localtime($tz_now) ) -
+                Time::Local::timegm( gmtime($tz_now) );
+my $tz_hour = int( $tz_offset / 3600 );
+my $tz_min  = int( $tz_offset / 60 ) % 60;
+my $rfc1123_regexp = qr{
+    ^(?:[A-Za-z]+,\s*)? (\d+)\s+ ([A-Za-z]+)\s+ (\d+)\s+
+    (\d+):(\d+)(?::(\d+)(?:\.\d*)?)?\s*
+    ([\+\-]\d+:?\d{2})?
+}x;
+my $w3cdtf_regexp = qr{
+    ^(\d+)-(\d+)-(\d+)
+    (?:T(\d+):(\d+)(?::(\d+)(?:\.\d*)?\:?)?
+    ([\+\-]\d+:?\d{2})?|$)
+}x;
 
 sub epoch_to_w3cdtf {
     my $epoch = shift;
@@ -1761,11 +1885,8 @@ sub epoch_to_w3cdtf {
     my ( $sec, $min, $hour, $day, $mon, $year ) = localtime($epoch);
     $year += 1900;
     $mon++;
-    my $off =
-      ( Time::Local::timegm( localtime($epoch) ) -
-          Time::Local::timegm( gmtime($epoch) ) ) / 60;
-    my $tz = $off ? sprintf( "%+03d:%02d", $off / 60, $off % 60 ) : "Z";
-    sprintf( "%04d-%02d-%02dT%02d:%02d:%02d%s",
+    my $tz = $tz_offset ? sprintf( '%+03d:%02d', $tz_hour, $tz_min ) : 'Z';
+    sprintf( '%04d-%02d-%02dT%02d:%02d:%02d%s',
         $year, $mon, $day, $hour, $min, $sec, $tz );
 }
 
@@ -1774,43 +1895,31 @@ sub epoch_to_rfc1123 {
     return unless defined $epoch;
     my ( $sec, $min, $hour, $mday, $mon, $year, $wday ) = localtime($epoch);
     $year += 1900;
-    my $off =
-      ( Time::Local::timegm( localtime($epoch) ) -
-          Time::Local::timegm( gmtime($epoch) ) ) / 60;
-    my $tz = $off ? sprintf( "%+03d%02d", $off / 60, $off % 60 ) : "GMT";
-    sprintf( "%s, %02d %s %04d %02d:%02d:%02d %s",
+    my $tz = $tz_offset ? sprintf( '%+03d%02d', $tz_hour, $tz_min ) : 'GMT';
+    sprintf( '%s, %02d %s %04d %02d:%02d:%02d %s',
         $DoW[$wday], $mday, $MoY[$mon], $year, $hour, $min, $sec, $tz );
 }
 
 sub rfc1123_to_w3cdtf {
     my $str = shift;
     return unless defined $str;
-    my ( $mday, $mon, $year, $hour, $min, $sec, $tz ) = (
-        $str =~ m{
-        ^(?:[A-Za-z]+,\s*)? (\d+)\s+ ([A-Za-z]+)\s+ (\d+)\s+
-        (\d+):(\d+):(\d+)\s* ([\+\-]\d+:?\d{2})?
-    }x
-    );
+    my ( $mday, $mon, $year, $hour, $min, $sec, $tz ) = ( $str =~ $rfc1123_regexp );
     return unless ( $year && $mon && $mday );
     $mon = $MoY{ uc($mon) } or return;
     if ( defined $tz && $tz =~ m/^([\+\-]\d+):?(\d{2})$/ ) {
-        $tz = sprintf( "%+03d:%02d", $1, $2 );
+        $tz = sprintf( '%+03d:%02d', $1, $2 );
     }
     else {
-        $tz = "Z";
+        $tz = 'Z';
     }
-    sprintf( "%04d-%02d-%02dT%02d:%02d:%02d%s",
+    sprintf( '%04d-%02d-%02dT%02d:%02d:%02d%s',
         $year, $mon, $mday, $hour, $min, $sec, $tz );
 }
 
 sub w3cdtf_to_rfc1123 {
     my $str = shift;
     return unless defined $str;
-    my ( $year, $mon, $mday, $hour, $min, $sec, $tz ) = (
-        $str =~ m{
-        ^(\d+)-(\d+)-(\d+)(?:T(\d+):(\d+)(?::(\d+)(?:\.\d*)?\:?)?([\+\-]\d+:?\d{2})?|$)
-    }x
-    );
+    my ( $year, $mon, $mday, $hour, $min, $sec, $tz ) = ( $str =~ $w3cdtf_regexp );
     return unless ( $year > 1900 && $mon && $mday );
     $hour ||= 0;
     $min ||= 0;
@@ -1819,16 +1928,49 @@ sub w3cdtf_to_rfc1123 {
 
     my $wday = ( gmtime($epoch) )[6];
     if ( defined $tz && $tz =~ m/^([\+\-]\d+):?(\d{2})$/ ) {
-        $tz = sprintf( "%+03d%02d", $1, $2 );
+        $tz = sprintf( '%+03d%02d', $1, $2 );
     }
     else {
-        $tz = "GMT";
+        $tz = 'GMT';
     }
     sprintf(
-        "%s, %02d %s %04d %02d:%02d:%02d %s",
-        $DoW[$wday], $mday, $MoY[ $mon - 1 ],
-        $year, $hour, $min, $sec, $tz
+        '%s, %02d %s %04d %02d:%02d:%02d %s',
+        $DoW[$wday], $mday, $MoY[ $mon - 1 ], $year, $hour, $min, $sec, $tz
     );
+}
+
+sub rfc1123_to_epoch {
+    my $str = shift;
+    return unless defined $str;
+    my ( $mday, $mon, $year, $hour, $min, $sec, $tz ) = ( $str =~ $rfc1123_regexp );
+    return unless ( $year && $mon && $mday );
+    $mon = $MoY{ uc($mon) } or return;
+    my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
+    if ( defined $tz && $tz =~ m/^([\+\-]?)(\d+):?(\d{2})$/ ) {
+        my( $pm, $ho, $mi ) = ( $1, $2, $3 );
+        my $off = $ho * 60 + $mi;
+        $off *= ( $pm eq "-" ) ? -60 : 60;
+        $epoch -= $off;
+    }
+    $epoch;
+}
+
+sub w3cdtf_to_epoch {
+    my $str = shift;
+    return unless defined $str;
+    my ( $year, $mon, $mday, $hour, $min, $sec, $tz ) = ( $str =~ $w3cdtf_regexp );
+    return unless ( $year > 1900 && $mon && $mday );
+    $hour ||= 0;
+    $min ||= 0;
+    $sec ||= 0;
+    my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
+    if ( defined $tz && $tz =~ m/^([\+\-]?)(\d+):?(\d{2})$/ ) {
+        my( $pm, $ho, $mi ) = ( $1, $2, $3 );
+        my $off = $ho * 60 + $mi;
+        $off *= ( $pm eq "-" ) ? -60 : 60;
+        $epoch -= $off;
+    }
+    $epoch;
 }
 
 sub get_w3cdtf {
@@ -1837,10 +1979,10 @@ sub get_w3cdtf {
     if ( $date =~ /^\d+$/s ) {
         return &epoch_to_w3cdtf($date);
     }
-    elsif ( $date =~ /^([A-Za-z]+,\s*)?\d+\s+[A-Za-z]+\s+\d+\s+\d+:\d+:\d+/s ) {
+    elsif ( $date =~ $rfc1123_regexp ) {
         return &rfc1123_to_w3cdtf($date);
     }
-    elsif ( $date =~ /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?:?)?[Z\+\-]|$)/s ) {
+    elsif ( $date =~ $w3cdtf_regexp ) {
         return $date;
     }
     undef;
@@ -1852,11 +1994,26 @@ sub get_rfc1123 {
     if ( $date =~ /^\d+$/s ) {
         return &epoch_to_rfc1123($date);
     }
-    elsif ( $date =~ /^([A-Za-z]+,\s*)?\d+\s+[A-Za-z]+\s+\d+\s+\d+:\d+:\d+/s ) {
+    elsif ( $date =~ $rfc1123_regexp ) {
         return $date;
     }
-    elsif ( $date =~ /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?:?)?[Z\+\-]|$)/s ) {
+    elsif ( $date =~ $w3cdtf_regexp ) {
         return &w3cdtf_to_rfc1123($date);
+    }
+    undef;
+}
+
+sub get_epoch {
+    my $date = shift;
+    return unless defined $date;
+    if ( $date =~ /^\d+$/s ) {
+        return $date;
+    }
+    elsif ( $date =~ $rfc1123_regexp ) {
+        return &rfc1123_to_epoch($date);
+    }
+    elsif ( $date =~ $w3cdtf_regexp ) {
+        return &w3cdtf_to_epoch($date);
     }
     undef;
 }
@@ -1869,6 +2026,18 @@ sub merge_hash {
         next if exists $map->{$key};
         next if exists $base->{$key};
         $base->{$key} = $merge->{$key};
+    }
+}
+
+sub param_even_odd {
+    if ( (scalar @_) % 2 == 0 ) {
+        # even num of args - new( key1 => val1, key2 => arg2 );
+        my $array = [ @_ ];
+        return $array;
+    }
+    else {
+        # odd num of args - new( first, key1 => val1, key2 => arg2 );
+        return ( undef, @_ );
     }
 }
 

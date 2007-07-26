@@ -1,5 +1,9 @@
 # XML::FeedPP Changes
 
+2007/07/27 (0.22)
+    * bugfix: Daylight saving time accepted.
+      http://cpantesters.perl.org/show/XML-FeedPP.html#XML-FeedPP-0.21
+
 2007/01/21 (0.21)
     * update new() method to allow key/value pairs to set elements.
     * update add_item() method to allow key/value pairs to set elements.

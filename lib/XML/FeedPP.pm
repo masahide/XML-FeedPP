@@ -337,9 +337,9 @@ Yusuke Kawasaki, http://www.kawa.net/
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2006 Yusuke Kawasaki.  All rights reserved.  This
-program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+Copyright (c) 2006-2007 Yusuke Kawasaki. All rights reserved.
+This program is free software; you can redistribute it and/or 
+modify it under the same terms as Perl itself.
 
 =cut
 
@@ -357,7 +357,7 @@ use vars qw(
     $FEED_METHODS   $ITEM_METHODS
 );
 
-$VERSION = "0.21";
+$VERSION = "0.22";
 
 $RSS_VERSION  = '2.0';
 $RDF_VERSION  = '1.0';
@@ -370,8 +370,8 @@ $XMLNS_NOCOPY = [qw( xmlns xmlns:rdf xmlns:dc xmlns:atom )];
 
 $TREEPP_OPTIONS = {
     force_array => [qw( item rdf:li entry )],
-    first_out   => [qw( -rel -type )],
-    last_out    => [qw( description item items entry -width -height )],
+    first_out   => [qw( -xmlns:rdf -xmlns -rel -type url title link )],
+    last_out    => [qw( description image item items entry -width -height )],
     user_agent  => "XML-FeedPP/$VERSION ",
 };
 
@@ -955,7 +955,15 @@ use vars qw( @ISA );
 sub title       { shift->get_or_set( "title",       @_ ); }
 sub description { shift->get_or_set( "description", @_ ); }
 sub category    { shift->get_set_array( "category", @_ ); }
-sub author      { shift->get_or_set( "author",      @_ ); }
+
+sub author {
+    my $self = shift;
+    if ( scalar @_ ) {
+        $self->set_value( 'author', @_ );
+    } else {
+        $self->get_value('author') || $self->get_value('dc:creator');
+    }
+}
 
 sub link {
     my $self = shift;
@@ -1882,7 +1890,7 @@ my $w3cdtf_regexp = qr{
 sub epoch_to_w3cdtf {
     my $epoch = shift;
     return unless defined $epoch;
-    my ( $sec, $min, $hour, $day, $mon, $year ) = localtime($epoch);
+    my ( $sec, $min, $hour, $day, $mon, $year ) = gmtime($epoch+$tz_offset);
     $year += 1900;
     $mon++;
     my $tz = $tz_offset ? sprintf( '%+03d:%02d', $tz_hour, $tz_min ) : 'Z';
@@ -1893,7 +1901,7 @@ sub epoch_to_w3cdtf {
 sub epoch_to_rfc1123 {
     my $epoch = shift;
     return unless defined $epoch;
-    my ( $sec, $min, $hour, $mday, $mon, $year, $wday ) = localtime($epoch);
+    my ( $sec, $min, $hour, $mday, $mon, $year, $wday ) = gmtime($epoch+$tz_offset);
     $year += 1900;
     my $tz = $tz_offset ? sprintf( '%+03d%02d', $tz_hour, $tz_min ) : 'GMT';
     sprintf( '%s, %02d %s %04d %02d:%02d:%02d %s',
@@ -1925,7 +1933,6 @@ sub w3cdtf_to_rfc1123 {
     $min ||= 0;
     $sec ||= 0;
     my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
-
     my $wday = ( gmtime($epoch) )[6];
     if ( defined $tz && $tz =~ m/^([\+\-]\d+):?(\d{2})$/ ) {
         $tz = sprintf( '%+03d%02d', $1, $2 );
@@ -1946,12 +1953,7 @@ sub rfc1123_to_epoch {
     return unless ( $year && $mon && $mday );
     $mon = $MoY{ uc($mon) } or return;
     my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
-    if ( defined $tz && $tz =~ m/^([\+\-]?)(\d+):?(\d{2})$/ ) {
-        my( $pm, $ho, $mi ) = ( $1, $2, $3 );
-        my $off = $ho * 60 + $mi;
-        $off *= ( $pm eq "-" ) ? -60 : 60;
-        $epoch -= $off;
-    }
+    $epoch -= &get_tz_offset( $tz );
     $epoch;
 }
 
@@ -1964,13 +1966,18 @@ sub w3cdtf_to_epoch {
     $min ||= 0;
     $sec ||= 0;
     my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
-    if ( defined $tz && $tz =~ m/^([\+\-]?)(\d+):?(\d{2})$/ ) {
-        my( $pm, $ho, $mi ) = ( $1, $2, $3 );
-        my $off = $ho * 60 + $mi;
-        $off *= ( $pm eq "-" ) ? -60 : 60;
-        $epoch -= $off;
-    }
+    $epoch -= &get_tz_offset( $tz );
     $epoch;
+}
+
+sub get_tz_offset {
+    my $tz = shift;
+    return 0 unless defined $tz;
+    return 0 unless( $tz =~ m/^([\+\-]?)(\d+):?(\d{2})$/ );
+    my( $pm, $ho, $mi ) = ( $1, $2, $3 );
+    my $off = $ho * 60 + $mi;
+    $off *= ( $pm eq "-" ) ? -60 : 60;
+    $off;
 }
 
 sub get_w3cdtf {

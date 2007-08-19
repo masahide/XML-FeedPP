@@ -31,6 +31,9 @@ t/22_init_elements.t
 t/23_match_item.t
 t/24_get_epoch.t
 t/25_sort_timezone.t
+t/26_atom10_parse.t
+t/27_atom03_parse.t
+t/28_atom10_write.t
 t/40_dumpjson_pp.t
 t/41_dumpjson_syck.t
 t/42_dumpjson_slim.t

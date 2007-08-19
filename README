@@ -34,46 +34,50 @@ SYNOPSIS
         my $atom = $feed->to_string();                      # get Atom source code
 
 DESCRIPTION
-    XML::FeedPP is an all-purpose syndication utility that parses and
-    publishes RSS, RDF, and Atom feeds. It allows you to add new content,
-    merge feeds, and convert among various formats. It is a pure Perl
-    implementation and does not require any other module except for
-    XML::TreePP.
+    "XML::FeedPP" is an all-purpose syndication utility that parses and
+    publishes RSS 2.0, RSS 1.0 (RDF), Atom 0.3 and 1.0 feeds. It allows you
+    to add new content, merge feeds, and convert among these various
+    formats. It is a pure Perl implementation and does not require any other
+    module except for XML::TreePP.
 
 METHODS FOR FEED
-  $feed = XML::FeedPP->new( 'index.rss' );
-    This constructor method creates an XML::FeedPP feed instance. The only
+  $feed = XML::FeedPP->new( "index.rss" );
+    This constructor method creates an "XML::FeedPP" feed instance. The only
     argument is the local filename. The format of $source must be one of the
     supported feed formats -- RSS, RDF or Atom -- or execution is halted.
 
-  $feed = XML::FeedPP->new( 'http://use.perl.org/index.rss' );
+  $feed = XML::FeedPP->new( "http://use.perl.org/index.rss" );
     The URL on the remote web server is also available as the first
-    argument. The LWP::UserAgent module is required to download it.
+    argument. LWP::UserAgent is required to download it.
 
-  $feed = XML::FeedPP->new( '<?xml?><rss version="2.0"><channel>....' );
+  $feed = XML::FeedPP->new( "<?xml?><rss version=..." );
     The XML source code is also available as the first argument.
 
   $feed = XML::FeedPP::RSS->new( $source );
-    This constructor method creates an instance for an RSS-formated feed.
-    The first argument is optional, but must be valid RSS if specified. This
-    method returns an empty instance when $source is undefined.
+    This constructor method creates an instance for an RSS 2.0 feed. The
+    first argument is optional, but must be valid an RSS source if
+    specified. This method returns an empty instance when $source is
+    undefined.
 
   $feed = XML::FeedPP::RDF->new( $source );
-    This constructor method creates an instance for RDF-formatted feed. The
-    first argument is optional, but must be RDF if specified. This method
-    returns an empty instance when $source is undefined.
-
-  $feed = XML::FeedPP::Atom->new( $source );
-    This constructor method creates an instance for an Atom-formatted feed.
-    The first argument is optional, but must be Atom if specified. This
+    This constructor method creates an instance for RSS 1.0 (RDF) feed. The
+    first argument is optional, but must be an RDF source if specified. This
     method returns an empty instance when $source is undefined.
 
+  $feed = XML::FeedPP::Atom->new( $source );
+    This constructor method creates an instance for an Atom 0.3/1.0 feed.
+    The first argument is optional, but must be an Atom source if specified.
+    This method returns an empty instance when $source is undefined.
+
+    Atom 1.0 feed is supported since "XML::FeedPP" version 0.30. Atom 0.3 is
+    still default however.
+
   $feed = XML::FeedPP::RSS->new( link => $link, title => $tile, ... );
-    This constructor method creates an empty instance and sets <link>,
-    <title> elements etc.
+    This constructor method creates an instance which has "link", "title"
+    elements etc.
 
   $feed->load( $source );
-    This method loads an RSS/RDF/Atom file, much like the new() method does.
+    This method loads an RSS/RDF/Atom file, much like "new()" method does.
 
   $feed->merge( $source );
     This method merges an RSS/RDF/Atom file into the existing $feed
@@ -92,20 +96,17 @@ METHODS FOR FEED
     This method generate an XML file. The output $encoding is optional, and
     the default is 'UTF-8'.
 
-  $item = $feed->add_item( $url );
+  $item = $feed->add_item( $link );
     This method creates a new item/entry and returns its instance. A
-    mandatory $link argument is the URL of the new item/entry. RSS's <item>
-    element is an instance of XML::FeedPP::RSS::Item class. RDF's <item>
-    element is an instance of XML::FeedPP::RDF::Item class. Atom's <entry>
-    element is an instance of XML::FeedPP::Atom::Entry class.
+    mandatory $link argument is the URL of the new item/entry.
 
   $item = $feed->add_item( $srcitem );
     This method duplicates an item/entry and adds it to $feed. $srcitem is a
-    XML::FeedPP::*::Item class's instance which is returned by the
-    get_item() method, as described above.
+    "XML::FeedPP::*::Item" class's instance which is returned by
+    "get_item()" method, as described above.
 
   $item = $feed->add_item( link => $link, title => $tile, ... );
-    This method creates an new item/entry and sets <link>, <title> elements
+    This method creates an new item/entry which has "link", "title" elements
     etc.
 
   $item = $feed->get_item( $index );
@@ -128,24 +129,24 @@ METHODS FOR FEED
     This method removes all items/entries from the $feed.
 
   $feed->sort_item();
-    This method sorts the order of items in $feed by <pubDate>.
+    This method sorts the order of items in $feed by "pubDate".
 
   $feed->uniq_item();
     This method makes items unique. The second and succeeding items that
     have the same link URL are removed.
 
   $feed->normalize();
-    This method calls both the sort_item() and uniq_item() methods.
+    This method calls both the "sort_item()" and "uniq_item()" methods.
 
   $feed->limit_item( $num );
     Removes items in excess of the specified numeric limit. Items at the end
-    of the list are removed. When preceded by sort_item() or normalize(),
-    this deletes more recent items.
+    of the list are removed. When preceded by "sort_item()" or
+    "normalize()", this deletes more recent items.
 
-  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
+  $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
     Adds an XML namespace at the document root of the feed.
 
-  $url = $feed->xmlns( 'xmlns:media' );
+  $url = $feed->xmlns( "xmlns:media" );
     Returns the URL of the specified XML namespace.
 
   @list = $feed->xmlns();
@@ -153,100 +154,109 @@ METHODS FOR FEED
 
 METHODS FOR CHANNEL
   $feed->title( $text );
-    This method sets/gets the feed's <title> value, returning the current
+    This method sets/gets the feed's "title" element, returning its current
     value when $title is undefined.
 
   $feed->description( $html );
-    This method sets/gets the feed's <description> value in plain text or
-    HTML, returning the current value when $html is undefined.
+    This method sets/gets the feed's "description" element in plain text or
+    HTML, returning its current value when $html is undefined. It is mapped
+    to "content" element for Atom 0.3/1.0.
 
   $feed->pubDate( $date );
-    This method sets/gets the feed's <pubDate> value for RSS, <dc:date>
-    value for RDF, or <modified> value for Atom. It returns the current
-    value when $date is undefined. See also the DATE/TIME FORMATS section.
+    This method sets/gets the feed's "pubDate" element for RSS, returning
+    its current value when $date is undefined. It is mapped to "dc:date"
+    element for RDF, "modified" for Atom 0.3, and "updated" for Atom 1.0.
+    See also "DATE AND TIME FORMATS" section below.
 
   $feed->copyright( $text );
-    This method sets/gets the feed's <copyright> value for RSS/Atom, or
-    <dc:rights> element for RDF. It returns the current value when $text is
-    undefined.
+    This method sets/gets the feed's "copyright" element for RSS, returning
+    its current value when $text is undefined. It is mapped to "dc:rights"
+    element for RDF, "copyright" for Atom 0.3, and "rights" for Atom 1.0.
 
   $feed->link( $url );
-    This method sets/gets the URL of the web site as the feed's <link> value
-    for RSS/RDF/Atom. It returns the current value when the $url is
-    undefined.
+    This method sets/gets the URL of the web site as the feed's "link"
+    element, returning its current value when the $url is undefined.
 
   $feed->language( $lang );
-    This method sets/gets the feed's <language> value for RSS, <dc:language>
-    element for RDF, or <feed xml:lang=""> attribute for Atom. It returns
-    the current value when the $lang is undefined.
+    This method sets/gets the feed's "language" element for RSS, returning
+    its current value when the $lang is undefined. It is mapped to
+    "dc:language" element for RDF, "feed xml:lang=""" for Atom 0.3/1.0.
 
   $feed->image( $url, $title, $link, $description, $width, $height )
-    This method sets/gets the feed's <image> value and its child nodes for
-    RSS/RDF, returning a list of current values when any arguments are
-    undefined. This method is ignored for Atom feeds.
+    This method sets/gets the feed's "image" element and its child nodes,
+    returning a list of current values when any arguments are undefined.
 
 METHODS FOR ITEM
   $item->title( $text );
-    This method sets/gets the item's <title> value, returning the current
+    This method sets/gets the item's "title" element, returning its current
     value when the $text is undefined.
 
   $item->description( $html );
-    This method sets/gets the item's <description> value in HTML or plain
-    text, returning the current value when $text is undefined.
+    This method sets/gets the item's "description" element in HTML or plain
+    text, returning its current value when $text is undefined. It is mapped
+    to "content" element for Atom 0.3/1.0.
 
   $item->pubDate( $date );
-    This method sets/gets the item's <pubDate> value for RSS, RDF's
-    <dc:date> element, or Atom's <issued> element. This method returns the
-    current value when $date is undefined. See also the DATE/TIME FORMATS
-    section.
+    This method sets/gets the item's "pubDate" element, returning its
+    current value when $date is undefined. It is mapped to "dc:date" element
+    for RDF, "modified" for Atom 0.3, and "updated" for Atom 1.0. See also
+    "DATE AND TIME FORMATS" section below.
 
   $item->category( $text );
-    This method sets/gets the item's <category> value for RSS/RDF, but is
-    ignored for Atom. It returns the current value when $text is undefined.
+    This method sets/gets the item's "category" element. returning its
+    current value when $text is undefined. It is mapped to "dc:subject"
+    element for RDF, and ignored for Atom 0.3.
 
-  $item->author( $text );
-    This method sets/gets the item's <author> value for RSS, <creator> value
-    for RDF, or <author><name> value for Atom. It returns the current value
-    when $text is undefined.
+  $item->author( $name );
+    This method sets/gets the item's "author" element, returning its current
+    value when $name is undefined. It is mapped to "dc:creator" element for
+    RDF, "author" for Atom 0.3/1.0.
 
   $item->guid( $guid, isPermaLink => $bool );
-    This method sets/gets the item's <guid> value for RSS or <id> value for
-    Atom; it is ignored for RDF. The second argument is optional. This
-    method returns the current value when $guid is undefined.
+    This method sets/gets the item's "guid" element, returning its current
+    value when $guid is undefined. It is mapped to "id" element for Atom,
+    and ignored for RDF. The second argument is optional.
 
   $item->set( $key => $value, ... );
-    This method sets customized node values or attributes. See also the
-    GENERAL SET/GET section that follows.
+    This method sets customized node values or attributes. See also
+    "ACCESSOR AND MUTATORS" section below.
 
   $value = $item->get( $key );
-    This method returns the node value or attribute. See also the GENERAL
-    SET/GET section that follows.
+    This method returns the node value or attribute. See also "ACCESSOR AND
+    MUTATORS" section below.
 
   $link = $item->link();
-    This method returns the item's <link> value.
+    This method returns the item's "link" element.
 
-GENERAL SET/GET
-    XML::FeedPP understands only <rdf:*>, <dc:*> modules and RSS/RDF/ATOM's
-    default namespaces. There are NO native methods for any other external
-    modules, such as <media:*>. But set()/get() methods are available to
-    get/set the value of any elements or attributes for these modules.
+ACCESSOR AND MUTATORS
+    This module understands only subset of "rdf:*", "dc:*" modules and
+    RSS/RDF/Atom's default namespaces by itself. There are NO native methods
+    for any other external modules, such as "media:*". But "set()" and
+    "get()" methods are available to get/set the value of any elements or
+    attributes for these modules.
 
-  $item->set( 'module:name' => $value );
-    This sets the value of the child node: <item><module:name>$value
+  $item->set( "module:name" => $value );
+    This sets the value of the child node:
 
-  $item->set( 'module:name@attr' => $value );
-    This sets the value of the child node's attribute: <item><module:name
-    attr="$value">
+        <item><module:name>$value</module:name>...</item>
 
-  $item->set( '@attr' => $value );
-    This sets the value of the item's attribute: <item attr="$value">
+  $item->set( "module:name@attr" => $value );
+    This sets the value of the child node's attribute:
 
-  $item->set( 'hoge/pomu@hare' => $value );
+        <item><module:name attr="$value" />...</item>
+
+  $item->set( "@attr" => $value );
+    This sets the value of the item's attribute:
+
+        <item attr="$value">...</item>
+
+  $item->set( "hoge/pomu@hare" => $value );
     This code sets the value of the child node's child node's attribute:
-    <item><hoge><pomu attr="$value">
 
-DATE/TIME FORMATS
-    XML::FeedPP allows you to describe date/time using any of the three
+        <item><hoge><pomu attr="$value" /></hoge>...</item>
+
+DATE AND TIME FORMATS
+    "XML::FeedPP" allows you to describe date/time using any of the three
     following formats:
 
   $date = "Thu, 23 Feb 2006 14:43:43 +0900";
@@ -258,15 +268,15 @@ DATE/TIME FORMATS
 
   $date = 1140705823;
     The last format is the number of seconds since the epoch,
-    1970-01-01T00:00:00Z. You know, this is the native format of Perl's
-    time() function.
+    "1970-01-01T00:00:00Z". You know, this is the native format of Perl's
+    "time()" function.
 
 MODULE DEPENDENCIES
-    XML::FeedPP requires only XML::TreePP, which likewise is a pure Perl
-    implementation. The standard LWP::UserAgent module is required to
-    download feeds from remote web servers. The Jcode module is required to
-    convert Japanese encodings on Perl 5.006 and 5.6.1, but is NOT required
-    on Perl 5.8.x and later.
+    "XML::FeedPP" requires only XML::TreePP which likewise is a pure Perl
+    implementation. The standard LWP::UserAgent is required to download
+    feeds from remote web servers. "Jcode.pm" is required to convert
+    Japanese encodings on Perl 5.005 and 5.6.1, but is NOT required on Perl
+    5.8.x and later.
 
 AUTHOR
     Yusuke Kawasaki, http://www.kawa.net/

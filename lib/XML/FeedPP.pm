@@ -37,57 +37,61 @@ Convert some RSS/RDF files to Atom format:
 
 =head1 DESCRIPTION
 
-XML::FeedPP is an all-purpose syndication utility that parses and
-publishes RSS, RDF, and Atom feeds. It allows you to add new content,
-merge feeds, and convert among various formats.  It is a pure Perl
-implementation and does not require any other module except for
-XML::TreePP.
+C<XML::FeedPP> is an all-purpose syndication utility that parses and
+publishes RSS 2.0, RSS 1.0 (RDF), Atom 0.3 and 1.0 feeds.
+It allows you to add new content, merge feeds, and convert among
+these various formats.
+It is a pure Perl implementation and does not require any other
+module except for XML::TreePP.
 
 =head1 METHODS FOR FEED
 
-=head2  $feed = XML::FeedPP->new( 'index.rss' );
+=head2  $feed = XML::FeedPP->new( "index.rss" );
 
-This constructor method creates an XML::FeedPP feed instance. The only
+This constructor method creates an C<XML::FeedPP> feed instance. The only
 argument is the local filename.  The format of $source must be one of
 the supported feed formats -- RSS, RDF or Atom -- or execution is
 halted.
 
-=head2  $feed = XML::FeedPP->new( 'http://use.perl.org/index.rss' );
+=head2  $feed = XML::FeedPP->new( "http://use.perl.org/index.rss" );
 
-The URL on the remote web server is also available as the first
-argument.  The LWP::UserAgent module is required to download it.
+The URL on the remote web server is also available as the first argument.
+L<LWP::UserAgent> is required to download it.
 
-=head2  $feed = XML::FeedPP->new( '<?xml?><rss version="2.0"><channel>....' );
+=head2  $feed = XML::FeedPP->new( "<?xml?><rss version=..." );
 
 The XML source code is also available as the first argument.
 
 =head2  $feed = XML::FeedPP::RSS->new( $source );
 
-This constructor method creates an instance for an RSS-formated feed.
-The first argument is optional, but must be valid RSS if specified.
+This constructor method creates an instance for an RSS 2.0 feed.
+The first argument is optional, but must be valid an RSS source if specified.
 This method returns an empty instance when $source is undefined.
 
 =head2  $feed = XML::FeedPP::RDF->new( $source );
 
-This constructor method creates an instance for RDF-formatted feed.
-The first argument is optional, but must be RDF if specified.  This
-method returns an empty instance when $source is undefined.
+This constructor method creates an instance for RSS 1.0 (RDF) feed.
+The first argument is optional, but must be an RDF source if specified.
+This method returns an empty instance when $source is undefined.
 
 =head2  $feed = XML::FeedPP::Atom->new( $source );
 
-This constructor method creates an instance for an Atom-formatted
-feed.  The first argument is optional, but must be Atom if specified.
+This constructor method creates an instance for an Atom 0.3/1.0 feed.
+The first argument is optional, but must be an Atom source if specified.
 This method returns an empty instance when $source is undefined.
+
+Atom 1.0 feed is supported since C<XML::FeedPP> version 0.30.
+Atom 0.3 is still default however.
 
 =head2  $feed = XML::FeedPP::RSS->new( link => $link, title => $tile, ... );
 
-This constructor method creates an empty instance and sets <link>,
-<title> elements etc.
+This constructor method creates an instance
+which has C<link>, C<title> elements etc.
 
 =head2  $feed->load( $source );
 
-This method loads an RSS/RDF/Atom file, much like the new() method
-does.
+This method loads an RSS/RDF/Atom file,
+much like C<new()> method does.
 
 =head2  $feed->merge( $source );
 
@@ -109,23 +113,21 @@ the Jcode module are available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and
 This method generate an XML file.  The output $encoding is optional,
 and the default is 'UTF-8'.
 
-=head2  $item = $feed->add_item( $url );
+=head2  $item = $feed->add_item( $link );
 
 This method creates a new item/entry and returns its instance.
 A mandatory $link argument is the URL of the new item/entry.
-RSS's <item> element is an instance of XML::FeedPP::RSS::Item class.
-RDF's <item> element is an instance of XML::FeedPP::RDF::Item class.
-Atom's <entry> element is an instance of XML::FeedPP::Atom::Entry class.
 
 =head2  $item = $feed->add_item( $srcitem );
 
-This method duplicates an item/entry and adds it to $feed.  $srcitem
-is a XML::FeedPP::*::Item class's instance which is returned by the
-get_item() method, as described above.
+This method duplicates an item/entry and adds it to $feed.
+$srcitem is a C<XML::FeedPP::*::Item> class's instance
+which is returned by C<get_item()> method, as described above.
 
 =head2  $item = $feed->add_item( link => $link, title => $tile, ... );
 
-This method creates an new item/entry and sets <link>, <title> elements etc.
+This method creates an new item/entry
+which has C<link>, C<title> elements etc.
 
 =head2  $item = $feed->get_item( $index );
 
@@ -137,7 +139,7 @@ If $index is undefined in scalar context, it returns the number of items.
 
 =head2  @items = $feed->match_item( link => qr/.../, title => qr/.../, ... );
 
-This method finds item(s) which match all regular expressions given. 
+This method finds item(s) which match all regular expressions given.
 This method returns an array of all matched items in array context.
 This method returns the first matched item in scalar context.
 
@@ -152,7 +154,7 @@ This method removes all items/entries from the $feed.
 
 =head2  $feed->sort_item();
 
-This method sorts the order of items in $feed by <pubDate>.
+This method sorts the order of items in $feed by C<pubDate>.
 
 =head2  $feed->uniq_item();
 
@@ -161,19 +163,19 @@ that have the same link URL are removed.
 
 =head2  $feed->normalize();
 
-This method calls both the sort_item() and uniq_item() methods.
+This method calls both the C<sort_item()> and C<uniq_item()> methods.
 
 =head2  $feed->limit_item( $num );
 
 Removes items in excess of the specified numeric limit. Items at the
-end of the list are removed. When preceded by sort_item() or
-normalize(), this deletes more recent items.
+end of the list are removed. When preceded by C<sort_item()> or
+C<normalize()>, this deletes more recent items.
 
-=head2  $feed->xmlns( 'xmlns:media' => 'http://search.yahoo.com/mrss' );
+=head2  $feed->xmlns( "xmlns:media" => "http://search.yahoo.com/mrss" );
 
 Adds an XML namespace at the document root of the feed.
 
-=head2  $url = $feed->xmlns( 'xmlns:media' );
+=head2  $url = $feed->xmlns( "xmlns:media" );
 
 Returns the URL of the specified XML namespace.
 
@@ -185,127 +187,137 @@ Returns the list of all XML namespaces used in $feed.
 
 =head2  $feed->title( $text );
 
-This method sets/gets the feed's <title> value, returning the current
-value when $title is undefined.
+This method sets/gets the feed's C<title> element,
+returning its current value when $title is undefined.
 
 =head2  $feed->description( $html );
 
-This method sets/gets the feed's <description> value in plain text or
-HTML, returning the current value when $html is undefined.
+This method sets/gets the feed's C<description> element in plain text or HTML,
+returning its current value when $html is undefined.
+It is mapped to C<content> element for Atom 0.3/1.0.
 
 =head2  $feed->pubDate( $date );
 
-This method sets/gets the feed's <pubDate> value for RSS, <dc:date>
-value for RDF, or <modified> value for Atom.  It returns the current
-value when $date is undefined.  See also the DATE/TIME FORMATS
-section.
+This method sets/gets the feed's C<pubDate> element for RSS,
+returning its current value when $date is undefined.
+It is mapped to C<dc:date> element for RDF,
+C<modified> for Atom 0.3, and C<updated> for Atom 1.0.
+See also L</DATE AND TIME FORMATS> section below.
 
 =head2  $feed->copyright( $text );
 
-This method sets/gets the feed's <copyright> value for RSS/Atom, or
-<dc:rights> element for RDF.  It returns the current value when $text
-is undefined.
+This method sets/gets the feed's C<copyright> element for RSS,
+returning its current value when $text is undefined.
+It is mapped to C<dc:rights> element for RDF,
+C<copyright> for Atom 0.3, and C<rights> for Atom 1.0.
 
 =head2  $feed->link( $url );
 
-This method sets/gets the URL of the web site as the feed's <link>
-value for RSS/RDF/Atom.  It returns the current value when the $url is
-undefined.
+This method sets/gets the URL of the web site as the feed's C<link> element,
+returning its current value when the $url is undefined.
 
 =head2  $feed->language( $lang );
 
-This method sets/gets the feed's <language> value for RSS,
-<dc:language> element for RDF, or <feed xml:lang=""> attribute for
-Atom.  It returns the current value when the $lang is undefined.
+This method sets/gets the feed's C<language> element for RSS,
+returning its current value when the $lang is undefined.
+It is mapped to C<dc:language> element for RDF,
+C<feed xml:lang=""> for Atom 0.3/1.0.
 
 =head2  $feed->image( $url, $title, $link, $description, $width, $height )
 
-This method sets/gets the feed's <image> value and its child nodes for
-RSS/RDF, returning a list of current values when any arguments are
-undefined. This method is ignored for Atom feeds.
+This method sets/gets the feed's C<image> element and its child nodes,
+returning a list of current values when any arguments are undefined.
 
 =head1  METHODS FOR ITEM
 
 =head2  $item->title( $text );
 
-This method sets/gets the item's <title> value, returning the current
-value when the $text is undefined.
+This method sets/gets the item's C<title> element,
+returning its current value when the $text is undefined.
 
 =head2  $item->description( $html );
 
-This method sets/gets the item's <description> value in HTML or plain
-text, returning the current value when $text is undefined.
+This method sets/gets the item's C<description> element in HTML or plain text,
+returning its current value when $text is undefined.
+It is mapped to C<content> element for Atom 0.3/1.0.
 
 =head2  $item->pubDate( $date );
 
-This method sets/gets the item's <pubDate> value for RSS, RDF's
-<dc:date> element, or Atom's <issued> element.  This method returns
-the current value when $date is undefined.  See also the DATE/TIME
-FORMATS section.
+This method sets/gets the item's C<pubDate> element,
+returning its current value when $date is undefined.
+It is mapped to C<dc:date> element for RDF,
+C<modified> for Atom 0.3, and C<updated> for Atom 1.0.
+See also L</DATE AND TIME FORMATS> section below.
 
 =head2  $item->category( $text );
 
-This method sets/gets the item's <category> value for RSS/RDF, but is
-ignored for Atom.  It returns the current value when $text is
-undefined.
+This method sets/gets the item's C<category> element.
+returning its current value when $text is undefined.
+It is mapped to C<dc:subject> element for RDF, and ignored for Atom 0.3.
 
-=head2  $item->author( $text );
+=head2  $item->author( $name );
 
-This method sets/gets the item's <author> value for RSS, <creator>
-value for RDF, or <author><name> value for Atom.  It returns the
-current value when $text is undefined.
+This method sets/gets the item's C<author> element,
+returning its current value when $name is undefined.
+It is mapped to C<dc:creator> element for RDF,
+C<author> for Atom 0.3/1.0.
 
 =head2  $item->guid( $guid, isPermaLink => $bool );
 
-This method sets/gets the item's <guid> value for RSS or <id> value
-for Atom; it is ignored for RDF.  The second argument is optional.
-This method returns the current value when $guid is undefined.
+This method sets/gets the item's C<guid> element,
+returning its current value when $guid is undefined.
+It is mapped to C<id> element for Atom, and ignored for RDF.
+The second argument is optional.
 
 =head2  $item->set( $key => $value, ... );
 
-This method sets customized node values or attributes.  See also the
-GENERAL SET/GET section that follows.
+This method sets customized node values or attributes.
+See also L</ACCESSOR AND MUTATORS> section below.
 
 =head2  $value = $item->get( $key );
 
-This method returns the node value or attribute.  See also the GENERAL
-SET/GET section that follows.
+This method returns the node value or attribute.
+See also L</ACCESSOR AND MUTATORS> section below.
 
 =head2  $link = $item->link();
 
-This method returns the item's <link> value.
+This method returns the item's C<link> element.
 
-=head1  GENERAL SET/GET
+=head1  ACCESSOR AND MUTATORS
 
-XML::FeedPP understands only <rdf:*>, <dc:*> modules and
-RSS/RDF/ATOM's default namespaces.  There are NO native methods for
-any other external modules, such as <media:*>.  But set()/get()
-methods are available to get/set the value of any elements or
-attributes for these modules.
+This module understands only subset of C<rdf:*>, C<dc:*> modules
+and RSS/RDF/Atom's default namespaces by itself.
+There are NO native methods for any other external modules, such as C<media:*>.
+But C<set()> and C<get()> methods are available to get/set
+the value of any elements or attributes for these modules.
 
-=head2  $item->set( 'module:name' => $value );
+=head2  $item->set( "module:name" => $value );
 
 This sets the value of the child node:
-<item><module:name>$value
 
-=head2  $item->set( 'module:name@attr' => $value );
+    <item><module:name>$value</module:name>...</item>
+
+=head2  $item->set( "module:name@attr" => $value );
 
 This sets the value of the child node's attribute:
-<item><module:name attr="$value">
 
-=head2  $item->set( '@attr' => $value );
+    <item><module:name attr="$value" />...</item>
+
+=head2  $item->set( "@attr" => $value );
 
 This sets the value of the item's attribute:
-<item attr="$value">
 
-=head2  $item->set( 'hoge/pomu@hare' => $value );
+    <item attr="$value">...</item>
+
+=head2  $item->set( "hoge/pomu@hare" => $value );
 
 This code sets the value of the child node's child node's attribute:
-<item><hoge><pomu attr="$value">
 
-=head1  DATE/TIME FORMATS
+    <item><hoge><pomu attr="$value" /></hoge>...</item>
 
-XML::FeedPP allows you to describe date/time using any of the three
+=head1  DATE AND TIME FORMATS
+
+C<XML::FeedPP> allows you to describe date/time using any of the three
 following formats:
 
 =head2  $date = "Thu, 23 Feb 2006 14:43:43 +0900";
@@ -320,16 +332,17 @@ W3CDTF is the native format of RDF, as defined by ISO 8601.
 =head2  $date = 1140705823;
 
 The last format is the number of seconds since the epoch,
-1970-01-01T00:00:00Z.  You know, this is the native format of Perl's
-time() function.
+C<1970-01-01T00:00:00Z>.
+You know, this is the native format of Perl's C<time()> function.
 
 =head1 MODULE DEPENDENCIES
 
-XML::FeedPP requires only XML::TreePP, which likewise is a pure Perl
-implementation.  The standard LWP::UserAgent module is required to
-download feeds from remote web servers.  The Jcode module is required
-to convert Japanese encodings on Perl 5.006 and 5.6.1, but is NOT
-required on Perl 5.8.x and later.
+C<XML::FeedPP> requires only L<XML::TreePP>
+which likewise is a pure Perl implementation.
+The standard L<LWP::UserAgent> is required
+to download feeds from remote web servers.
+C<Jcode.pm> is required to convert Japanese encodings on Perl 5.005
+and 5.6.1, but is NOT required on Perl 5.8.x and later.
 
 =head1 AUTHOR
 
@@ -338,7 +351,7 @@ Yusuke Kawasaki, http://www.kawa.net/
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (c) 2006-2007 Yusuke Kawasaki. All rights reserved.
-This program is free software; you can redistribute it and/or 
+This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
 =cut
@@ -351,21 +364,23 @@ use Time::Local;
 use XML::TreePP;
 
 use vars qw(
-    $VERSION        $RSS_VERSION    $RDF_VERSION    $ATOM_VERSION
-    $XMLNS_RDF      $XMLNS_RSS      $XMLNS_DC       $XMLNS_ATOM
+    $VERSION        $RSS20_VERSION  $ATOM03_VERSION
+    $XMLNS_RDF      $XMLNS_RSS      $XMLNS_DC       $XMLNS_ATOM03
     $XMLNS_NOCOPY   $TREEPP_OPTIONS $MIME_TYPES
     $FEED_METHODS   $ITEM_METHODS
+    $XMLNS_ATOM10
 );
 
-$VERSION = "0.22";
+$VERSION = "0.30";
 
-$RSS_VERSION  = '2.0';
-$RDF_VERSION  = '1.0';
-$ATOM_VERSION = '0.3';
+$RSS20_VERSION  = '2.0';
+$ATOM03_VERSION = '0.3';
+
 $XMLNS_RDF    = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#';
 $XMLNS_RSS    = 'http://purl.org/rss/1.0/';
 $XMLNS_DC     = 'http://purl.org/dc/elements/1.1/';
-$XMLNS_ATOM   = 'http://purl.org/atom/ns#';
+$XMLNS_ATOM03 = 'http://purl.org/atom/ns#';
+$XMLNS_ATOM10 = 'http://www.w3.org/2005/Atom';
 $XMLNS_NOCOPY = [qw( xmlns xmlns:rdf xmlns:dc xmlns:atom )];
 
 $TREEPP_OPTIONS = {
@@ -426,7 +441,16 @@ sub new {
         XML::FeedPP::RDF->feed_bless($self);
     }
     elsif ( exists $self->{feed} ) {
-        XML::FeedPP::Atom->feed_bless($self);
+        my $xmlns = $self->{feed}->{-xmlns} if exists $self->{feed}->{-xmlns};
+        if ( $xmlns eq $XMLNS_ATOM10 ) {
+            XML::FeedPP::Atom::Atom10->feed_bless($self);
+        }
+        elsif ( $xmlns eq $XMLNS_ATOM03 ) {
+            XML::FeedPP::Atom::Atom03->feed_bless($self);
+        }
+        else {
+            XML::FeedPP::Atom->feed_bless($self);
+        }
     }
     else {
         my $root = join( " ", sort keys %$self );
@@ -451,13 +475,13 @@ sub load {
 
     my $tree;
     my $tpp = XML::TreePP->new(%$TREEPP_OPTIONS, @_);
-    if ( $source =~ m#^https?://# ) {
+    if ( $source =~ m#^https?://#s ) {
         $tree = $tpp->parsehttp( GET => $source );
     }
-    elsif ( $source =~ m#<\?xml.*\?>#i ) {
+    elsif ( $source =~ m#(^\s*)(<\?xml.*\?>|<\!DOCTYPE)#i ) {
         $tree = $tpp->parse($source);
     }
-    elsif ( -f $source ) {
+    elsif ( $source !~ /[\r\n]/ && -f $source ) {
         $tree = $tpp->parsefile($source);
     }
     Carp::croak "Invalid feed source: $source" unless ref $tree;
@@ -776,7 +800,7 @@ sub init_feed {
     my $self = shift or return;
 
     $self->{rss}               ||= {};
-    $self->{rss}->{'-version'} ||= $XML::FeedPP::RSS_VERSION;
+    $self->{rss}->{'-version'} ||= $XML::FeedPP::RSS20_VERSION;
 
     $self->{rss}->{channel} ||= XML::FeedPP::Element->new();
     XML::FeedPP::Element->ref_bless( $self->{rss}->{channel} );
@@ -864,7 +888,7 @@ sub sort_item {
     my $list = $self->{rss}->{channel}->{item} or return;
     my $epoch = [ map { $_->get_pubDate_epoch() } @$list ];
     my $sorted = [ map { $list->[$_] } sort {
-        $epoch->[$b] <=> $epoch->[$a] 
+        $epoch->[$b] <=> $epoch->[$a]
     } 0 .. $#$list ];
     @$list = @$sorted;
     scalar @$list;
@@ -1158,7 +1182,7 @@ sub sort_item {
     my $list = $self->{'rdf:RDF'}->{item} or return;
     my $epoch = [ map { $_->get_pubDate_epoch() } @$list ];
     my $sorted = [ map { $list->[$_] } sort {
-        $epoch->[$b] <=> $epoch->[$a] 
+        $epoch->[$b] <=> $epoch->[$a]
     } 0 .. $#$list ];
     @$list = @$sorted;
     $self->__refresh_items();
@@ -1272,8 +1296,15 @@ use vars qw( @ISA );
 sub title       { shift->get_or_set( "title",       @_ ); }
 sub description { shift->get_or_set( "description", @_ ); }
 sub category    { shift->get_set_array( "dc:subject",  @_ ); }
-sub author      { shift->get_or_set( "creator",     @_ ); }
 sub guid { undef; }    # this element is NOT supported for RDF
+
+sub author {
+    my $self   = shift;
+    my $author = shift;
+    return $self->get_value('dc:creator')
+        || $self->get_value('creator') unless defined $author;
+    $self->set_value( 'dc:creator' => $author );
+}
 
 sub link {
     my $self = shift;
@@ -1298,7 +1329,7 @@ sub get_pubDate_native {
 *get_pubDate_w3cdtf = \&get_pubDate_native;
 
 # ----------------------------------------------------------------
-package XML::FeedPP::Atom;
+package XML::FeedPP::Atom::Common;
 use strict;
 use vars qw( @ISA );
 @ISA = qw( XML::FeedPP );
@@ -1320,27 +1351,6 @@ sub new {
     $self;
 }
 
-sub init_feed {
-    my $self = shift or return;
-
-    $self->{feed} ||= XML::FeedPP::Element->new();
-    XML::FeedPP::Element->ref_bless( $self->{feed} );
-
-    $self->xmlns( 'xmlns' => $XML::FeedPP::XMLNS_ATOM );
-    $self->{feed}->{'-version'} ||= $XML::FeedPP::ATOM_VERSION;
-
-    $self->{feed}->{entry} ||= [];
-    if ( UNIVERSAL::isa( $self->{feed}->{entry}, "HASH" ) ) {
-        # if this feed has only one item
-        $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
-    }
-    foreach my $item ( @{ $self->{feed}->{entry} } ) {
-        XML::FeedPP::Atom::Entry->ref_bless($item);
-    }
-    $self->{feed}->{author} ||= { name => "-" };    # dummy for validation
-    $self;
-}
-
 sub merge_native_channel {
     my $self = shift;
     my $tree = shift or next;
@@ -1357,7 +1367,7 @@ sub add_item {
         return $self->add_clone_item( $link );
     }
 
-    my $item = XML::FeedPP::Atom::Entry->new(@rest);
+    my $item = $self->_entry_new(@rest);
     $item->link($link) if $link;
     $item->elements(@$init) if ref $init;
     push( @{ $self->{feed}->{entry} }, $item );
@@ -1407,7 +1417,7 @@ sub sort_item {
     my $list = $self->{feed}->{entry} or return;
     my $epoch = [ map { $_->get_pubDate_epoch() } @$list ];
     my $sorted = [ map { $list->[$_] } sort {
-        $epoch->[$b] <=> $epoch->[$a] 
+        $epoch->[$b] <=> $epoch->[$a]
     } 0 .. $#$list ];
     @$list = @$sorted;
     scalar @$list;
@@ -1443,89 +1453,11 @@ sub channel { shift->{feed}; }
 sub set     { shift->{feed}->set(@_); }
 sub get     { shift->{feed}->get(@_); }
 
-sub title {
-    my $self  = shift;
-    my $title = shift;
-    return $self->{feed}->get_value("title") unless defined $title;
-    $self->{feed}->set_value( "title" => $title, type => "text/plain" );
-}
-
-sub description {
-    my $self = shift;
-    my $desc = shift;
-    return $self->{feed}->get_value("tagline")
-        || $self->{feed}->get_value("subtitle") unless defined $desc;
-    $self->{feed}->set_value( "tagline" => $desc, type => "text/html", mode => "escaped" );
-}
-
-sub link {
-    my $self = shift;
-    my $href = shift;
-
-    my $link = $self->{feed}->{link} || [];
-    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
-    $link = [ grep { ref $_ } @$link ];
-    $link = [ grep {
-        ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
-    } @$link ];
-    $link = [ grep {
-        ! exists $_->{'-type'} || $_->{'-type'} =~ m#^text/(x-)?html#i
-    } @$link ];
-    my $html = shift @$link;
-
-    if ( defined $href ) {
-        if ( ref $html ) {
-            $html->{'-href'} = $href;
-        }
-        else {
-            my $hash = {
-                -rel    =>  'alternate',
-                -type   =>  'text/html',
-                -href   =>  $href,
-            };
-            my $flink = $self->{feed}->{link};
-            if ( ! ref $flink ) {
-                $self->{feed}->{link} = [ $hash ];
-            }
-            elsif ( UNIVERSAL::isa( $flink, 'ARRAY' )) {
-                push( @$flink, $hash );
-            }
-            elsif ( UNIVERSAL::isa( $flink, 'HASH' )) {
-                $self->{feed}->{link} = [ $flink, $hash ];
-            }
-        }
-    }
-    elsif ( ref $html ) {
-        return $html->{'-href'};
-    }
-    return;
-}
-
-sub pubDate {
-    my $self = shift;
-    my $date = shift;
-    return $self->get_pubDate_w3cdtf() unless defined $date;
-    $date = XML::FeedPP::Util::get_w3cdtf($date);
-    $self->{feed}->set_value( "modified", $date );
-}
-
-sub get_pubDate_native {
-    my $self = shift;
-    $self->{feed}->get_value("modified")        # Atom 0.3
-    || $self->{feed}->get_value("updated");     # Atom 1.0
-}
-
-*get_pubDate_w3cdtf = \&get_pubDate_native;
-
 sub language {
     my $self = shift;
     my $lang = shift;
     return $self->{feed}->{'-xml:lang'} unless defined $lang;
     $self->{feed}->{'-xml:lang'} = $lang;
-}
-
-sub copyright {
-    shift->{feed}->get_or_set( "copyright" => @_ );
 }
 
 sub image {
@@ -1579,24 +1511,271 @@ sub image {
     }
     undef;
 }
+
 # ----------------------------------------------------------------
-package XML::FeedPP::Atom::Entry;
+package XML::FeedPP::Atom::Atom03;
 use strict;
 use vars qw( @ISA );
-@ISA = qw( XML::FeedPP::Item );
+@ISA = qw( XML::FeedPP::Atom::Common );
+
+sub _entry_new {
+    my $self = shift;
+    XML::FeedPP::Atom::Atom03::Entry->new(@_);
+}
+
+sub init_feed {
+    my $self = shift or return;
+
+    $self->{feed} ||= XML::FeedPP::Element->new();
+    XML::FeedPP::Element->ref_bless( $self->{feed} );
+
+    $self->xmlns( 'xmlns' => $XML::FeedPP::XMLNS_ATOM03 );
+    $self->{feed}->{'-version'} ||= $XML::FeedPP::ATOM03_VERSION;
+
+    $self->{feed}->{entry} ||= [];
+    if ( UNIVERSAL::isa( $self->{feed}->{entry}, 'HASH' ) ) {
+        # if this feed has only one item
+        $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
+    }
+    foreach my $item ( @{ $self->{feed}->{entry} } ) {
+        XML::FeedPP::Atom::Atom03::Entry->ref_bless($item);
+    }
+    $self->{feed}->{author} ||= { name => '' };    # dummy for validation
+    $self;
+}
 
 sub title {
     my $self  = shift;
     my $title = shift;
-    return $self->get_value("title") unless defined $title;
-    $self->set_value( "title" => $title, type => "text/plain" );
+    return $self->{feed}->get_value('title') unless defined $title;
+    $self->{feed}->set_value( 'title' => $title, type => 'text/plain' );
 }
 
 sub description {
     my $self = shift;
     my $desc = shift;
-    return $self->get_value('summary')
-        || $self->get_value('content') unless defined $desc;
+    return $self->{feed}->get_value('tagline')
+        || $self->{feed}->get_value('subtitle') unless defined $desc;
+    $self->{feed}->set_value( 'tagline' => $desc, type => 'text/html', mode => 'escaped' );
+}
+
+sub pubDate {
+    my $self = shift;
+    my $date = shift;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
+    $date = XML::FeedPP::Util::get_w3cdtf($date);
+    $self->{feed}->set_value( 'modified', $date );
+}
+
+sub get_pubDate_native {
+    my $self = shift;
+    $self->{feed}->get_value('modified')        # Atom 0.3
+    || $self->{feed}->get_value('updated');     # Atom 1.0
+}
+
+*get_pubDate_w3cdtf = \&get_pubDate_native;
+
+sub copyright {
+    my $self = shift;
+    my $copy = shift;
+    return $self->{feed}->get_value('copyright')
+        || $self->{feed}->get_value('rights') unless defined $copy;
+    $self->{feed}->set_value( 'copyright' => $copy );
+}
+
+sub link {
+    my $self = shift;
+    my $href = shift;
+
+    my $link = $self->{feed}->{link} || [];
+    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
+    $link = [ grep { ref $_ } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
+    } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-type'} || $_->{'-type'} =~ m#^text/(x-)?html#i
+    } @$link ];
+    my $html = shift @$link;
+
+    if ( defined $href ) {
+        if ( ref $html ) {
+            $html->{'-href'} = $href;
+        }
+        else {
+            my $hash = {
+                -rel    =>  'alternate',
+                -type   =>  'text/html',
+                -href   =>  $href,
+            };
+            my $flink = $self->{feed}->{link};
+            if ( ! ref $flink ) {
+                $self->{feed}->{link} = [ $hash ];
+            }
+            elsif ( UNIVERSAL::isa( $flink, 'ARRAY' )) {
+                push( @$flink, $hash );
+            }
+            elsif ( UNIVERSAL::isa( $flink, 'HASH' )) {
+                $self->{feed}->{link} = [ $flink, $hash ];
+            }
+        }
+    }
+    elsif ( ref $html ) {
+        return $html->{'-href'};
+    }
+    return;
+}
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Atom::Atom10;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Atom::Common );
+
+sub _entry_new {
+    my $self = shift;
+    XML::FeedPP::Atom::Atom10::Entry->new(@_);
+}
+
+sub init_feed {
+    my $self = shift or return;
+
+    $self->{feed} ||= XML::FeedPP::Element->new();
+    XML::FeedPP::Element->ref_bless( $self->{feed} );
+
+    $self->xmlns( 'xmlns' => $XML::FeedPP::XMLNS_ATOM10 );
+#   $self->{feed}->{'-version'} ||= $XML::FeedPP::ATOM10_VERSION;
+
+    $self->{feed}->{entry} ||= [];
+    if ( UNIVERSAL::isa( $self->{feed}->{entry}, 'HASH' ) ) {
+        # if this feed has only one item
+        $self->{feed}->{entry} = [ $self->{feed}->{entry} ];
+    }
+    foreach my $item ( @{ $self->{feed}->{entry} } ) {
+        XML::FeedPP::Atom::Atom10::Entry->ref_bless($item);
+    }
+#   $self->{feed}->{author} ||= { name => '' };    # dummy for validation
+    $self;
+}
+
+sub title {
+    my $self  = shift;
+    my $title = shift;
+    return $self->{feed}->get_value('title') unless defined $title;
+    $self->{feed}->set_value( 'title' => $title, @_ );
+}
+
+sub description {
+    my $self = shift;
+    my $desc = shift;
+    return $self->{feed}->get_value('content')
+        || $self->{feed}->get_value('summary')
+        || $self->{feed}->get_value('subtitle')
+        || $self->{feed}->get_value('tagline') unless defined $desc;
+    $self->{feed}->set_value( 'content' => $desc, @_ );     # type => 'text'
+}
+
+sub pubDate {
+    my $self = shift;
+    my $date = shift;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
+    $date = XML::FeedPP::Util::get_w3cdtf($date);
+    $self->{feed}->set_value( 'updated', $date );
+}
+
+sub get_pubDate_native {
+    my $self = shift;
+    $self->{feed}->get_value('updated')         # Atom 1.0
+    || $self->{feed}->get_value('modified')     # Atom 0.3
+}
+
+*get_pubDate_w3cdtf = \&get_pubDate_native;
+
+sub copyright {
+    my $self = shift;
+    my $copy = shift;
+    return $self->{feed}->get_value('rights')
+        || $self->{feed}->get_value('copyright') unless defined $copy;
+    $self->{feed}->set_value( 'rights' => $copy );
+}
+
+sub link {
+    my $self = shift;
+    my $href = shift;
+
+    my $link = $self->{feed}->{link} || [];
+    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
+    $link = [ grep { ref $_ } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
+    } @$link ];
+    my $html = shift @$link;
+
+    if ( defined $href ) {
+        if ( ref $html ) {
+            $html->{'-href'} = $href;
+        }
+        else {
+            my $hash = {
+                -rel    =>  'alternate',
+                -href   =>  $href,
+            };
+            my $flink = $self->{feed}->{link};
+            if ( ! ref $flink ) {
+                $self->{feed}->{link} = [ $hash ];
+            }
+            elsif ( UNIVERSAL::isa( $flink, 'ARRAY' )) {
+                push( @$flink, $hash );
+            }
+            elsif ( UNIVERSAL::isa( $flink, 'HASH' )) {
+                $self->{feed}->{link} = [ $flink, $hash ];
+            }
+        }
+    }
+    elsif ( ref $html ) {
+        return $html->{'-href'};
+    }
+    return;
+}
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Atom;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Atom::Atom03 );
+
+# @ISA = qw( XML::FeedPP::Atom::Atom10 );   # if Atom 1.0 for default
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Atom::Common::Entry;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Item );
+
+sub author {
+    my $self = shift;
+    my $name = shift;
+    unless ( defined $name ) {
+        my $author = $self->{author}->{name} if ref $self->{author};
+        return $author;
+    }
+    my $author = ref $name ? $name : { name => $name };
+    $self->{author} = $author;
+}
+
+sub guid { shift->get_or_set( 'id', @_ ); }
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Atom::Atom03::Entry;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Atom::Common::Entry );
+
+sub description {
+    my $self = shift;
+    my $desc = shift;
+    return $self->get_value('content')
+        || $self->get_value('summary') unless defined $desc;
     $self->set_value(
         'content' => $desc,
         type      => 'text/html',
@@ -1609,7 +1788,7 @@ sub link {
     my $href = shift;
 
     my $link = $self->{link} || [];
-    $link = [$link] if UNIVERSAL::isa( $link, "HASH" );
+    $link = [$link] if UNIVERSAL::isa( $link, 'HASH' );
     $link = [ grep { ref $_ } @$link ];
     $link = [ grep {
         ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
@@ -1653,32 +1832,130 @@ sub pubDate {
     my $date = shift;
     return $self->get_pubDate_w3cdtf() unless defined $date;
     $date = XML::FeedPP::Util::get_w3cdtf($date);
-    $self->set_value( "issued",   $date );
-    $self->set_value( "modified", $date );
+    $self->set_value( 'issued',   $date );
+    $self->set_value( 'modified', $date );
 }
 
 sub get_pubDate_native {
     my $self = shift;
-    $self->get_value("issued")          # Atom 0.3
-    || $self->get_value("modified")     # Atom 0.3
-    || $self->get_value("updated");     # Atom 1.0
+    $self->get_value('modified')        # Atom 0.3
+    || $self->get_value('issued')       # Atom 0.3
+    || $self->get_value('updated')      # Atom 1.0
+    || $self->get_value('published');   # Atom 1.0
 }
 
 *get_pubDate_w3cdtf = \&get_pubDate_native;
 
-sub author {
-    my $self = shift;
-    my $name = shift;
-    unless ( defined $name ) {
-        my $author = $self->{author}->{name} if ref $self->{author};
-        return $author;
-    }
-    my $author = ref $name ? $name : { name => $name };
-    $self->{author} = $author;
+sub title {
+    my $self  = shift;
+    my $title = shift;
+    return $self->get_value('title') unless defined $title;
+    $self->set_value( 'title' => $title, type => 'text/plain' );
 }
 
-sub guid { shift->get_or_set( "id", @_ ); }
-sub category { undef; }    # this element is NOT supported for Atom
+sub category { undef; }    # this element is NOT supported for Atom 0.3
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Atom::Atom10::Entry;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Atom::Common::Entry );
+
+sub description {
+    my $self = shift;
+    my $desc = shift;
+    return $self->get_value('content')
+        || $self->get_value('summary') unless defined $desc;
+    $self->set_value( 'content' => $desc, @_ );
+}
+
+sub link {
+    my $self = shift;
+    my $href = shift;
+
+    my $link = $self->{link} || [];
+    $link = [$link] if UNIVERSAL::isa( $link, 'HASH' );
+    $link = [ grep { ref $_ } @$link ];
+    $link = [ grep {
+        ! exists $_->{'-rel'} || $_->{'-rel'} eq 'alternate'
+    } @$link ];
+    my $html = shift @$link;
+
+    if ( defined $href ) {
+        if ( ref $html ) {
+            $html->{'-href'} = $href;
+        }
+        else {
+            my $hash = {
+#               -rel    =>  'alternate',
+                -href   =>  $href,
+            };
+            my $flink = $self->{link};
+            if ( ! ref $flink ) {
+                $self->{link} = [ $hash ];
+            }
+            elsif ( ref $flink && UNIVERSAL::isa( $flink, 'ARRAY' )) {
+                push( @$flink, $hash );
+            }
+            elsif ( ref $flink && UNIVERSAL::isa( $flink, 'HASH' )) {
+                $self->{link} = [ $flink, $hash ];
+            }
+        }
+        $self->guid( $href ) unless defined $self->guid();
+    }
+    elsif ( ref $html ) {
+        return $html->{'-href'};
+    }
+    return;
+}
+
+sub pubDate {
+    my $self = shift;
+    my $date = shift;
+    return $self->get_pubDate_w3cdtf() unless defined $date;
+    $date = XML::FeedPP::Util::get_w3cdtf($date);
+    $self->set_value( 'updated', $date );
+}
+
+sub get_pubDate_native {
+    my $self = shift;
+    $self->get_value('updated')         # Atom 1.0
+    || $self->get_value('published')    # Atom 1.0
+    || $self->get_value('issued')       # Atom 0.3
+    || $self->get_value('modified');    # Atom 0.3
+}
+
+*get_pubDate_w3cdtf = \&get_pubDate_native;
+
+sub title {
+    my $self  = shift;
+    my $title = shift;
+    my $type  = shift || 'text';
+    return $self->get_value('title') unless defined $title;
+    $self->set_value( 'title' => $title, type => $type );
+}
+
+sub category {
+    my $self = shift;
+    if ( scalar @_ ) {
+        my $list = [ map {{-term=>$_};} @_ ];
+        $self->{category} = ( scalar @$list > 1 ) ? $list : shift @$list;
+    }
+    else {
+        return unless exists $self->{category};
+        my $list = $self->{category} || [];
+        $list = [ $list ] if ( defined $list && ! UNIVERSAL::isa( $list, 'ARRAY' ));
+        my $term = [ map {ref $_ && exists $_->{-term} && $_->{-term} } @$list ];
+#       return wantarray ? @$term : shift @$term;
+        return ( scalar @$term > 1 ) ? $term : shift @$term;
+    }
+}
+
+# ----------------------------------------------------------------
+package XML::FeedPP::Atom::Entry;
+use strict;
+use vars qw( @ISA );
+@ISA = qw( XML::FeedPP::Atom::Atom03::Entry );
 
 # ----------------------------------------------------------------
 package XML::FeedPP::Element;
@@ -1785,7 +2062,9 @@ sub get_set_array {
         $self->{$elem} = $value;
     } else {
         return unless exists $self->{$elem};
-        return $self->{$elem};
+        my $list = $self->{$elem};
+        return $list unless ref $list;
+        return ( scalar @$list > 1 ) ? $list : shift @$list;
     }
 }
 

@@ -1,6 +1,7 @@
 use ExtUtils::MakeMaker;
+use strict;
 
-WriteMakefile(
+my $opt = {
     NAME                => 'XML-FeedPP',
     VERSION_FROM        => 'lib/XML/FeedPP.pm',
     PREREQ_PM           => {
@@ -9,4 +10,10 @@ WriteMakefile(
 #       'LWP::UserAgent'    => '0',
 #       'HTTP::Lite'        => '0'
     },
-);
+};
+
+my $mm = $ExtUtils::MakeMaker::VERSION;
+$mm =~ s/[^\d\.]+//g;
+$opt->{LICENSE} = 'perl' if ( $mm >= 6.3001 );
+
+WriteMakefile( %$opt );

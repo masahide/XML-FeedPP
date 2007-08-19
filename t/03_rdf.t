@@ -91,7 +91,7 @@
     like( $source2, qr/<dc:date[^>]*>\s*     \Q$idateB\E/x,  "<dc:date>" );
     like( $source2, qr/<description[^>]*>\s* \Q$idesc\E/x,   "<description>" );
     like( $source2, qr/<dc:subject[^>]*>\s*  \Q$icate\E/x,   "<dc:subject>" );
-    like( $source2, qr/<creator[^>]*>\s*     \Q$iauthor\E/x, "<creator>" );
+    like( $source2, qr/<dc:creator[^>]*>\s*     \Q$iauthor\E/x, "<creator>" );
 #   like( $source2, qr/<guid[^>]*>\s*        \Q$iguid\E/x,   "<guid>" );
 # ----------------------------------------------------------------
 ;1;

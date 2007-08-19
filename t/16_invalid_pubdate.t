@@ -85,10 +85,10 @@ EOT
     $feed_atom->normalize();
     is( $feed_atom->pubDate(), $date114w, "atom channel pubDate()" );
     my $item_atom = $feed_atom->get_item(0);
-    is( $item_atom->pubDate(), $date110w, "atom item pubDate()" );
+    is( $item_atom->pubDate(), $date111w, "atom item pubDate()" );
     my $out_atom = $feed_atom->to_string();
     ok( $out_atom =~ /\Q$date114w\E/, "atom channel to_string()" );
-    ok( $out_atom =~ /\Q$date110w\E/, "atom item to_string()" );
+    ok( $out_atom =~ /\Q$date111w\E/, "atom item to_string()" );
 # ----------------------------------------------------------------
 ;1;
 # ----------------------------------------------------------------

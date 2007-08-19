@@ -1,5 +1,10 @@
 # XML::FeedPP Changes
 
+2007/08/20 (0.30)
+    * Atom 1.0 supported. Atom 0.3 is still default. (thanks to takemaru)
+      Note that future version of this would change its default as Atom 1.0.
+      http://teahut.sakura.ne.jp/b/2007-06-24-1.html
+
 2007/07/27 (0.22)
     * bugfix: Daylight saving time accepted.
       http://cpantesters.perl.org/show/XML-FeedPP.html#XML-FeedPP-0.21

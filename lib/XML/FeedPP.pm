@@ -371,7 +371,7 @@ use vars qw(
     $XMLNS_ATOM10
 );
 
-$VERSION = "0.30";
+$VERSION = "0.32";
 
 $RSS20_VERSION  = '2.0';
 $ATOM03_VERSION = '0.3';
@@ -2044,6 +2044,12 @@ sub get {
     }
     elsif ( defined $attr ) {                   # node@attribute
         return unless ref $node->{$tagname};
+        if ( UNIVERSAL::isa( $node->{$tagname}, "ARRAY" )) {
+            my $list = [ map { $_->{'-'.$attr} } 
+                         grep { exists $_->{'-'.$attr} }
+                         @{$node->{$tagname}} ];
+            return wantarray ? @$list : shift @$list;
+        }
         return unless exists $node->{$tagname}->{ '-' . $attr };
         return $node->{$tagname}->{ '-' . $attr };
     }

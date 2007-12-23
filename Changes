@@ -1,5 +1,13 @@
 # XML::FeedPP Changes
 
+2007/12/23 (0.32)
+    * commited on Google Code Hosting (Subversion)
+      http://code.google.com/p/xml-feedpp/
+      http://xml-feedpp.googlecode.com/svn/
+
+2007/11/16 (0.31) not released
+    * getting from multiple nodes is supported for <media:thumbnail url="">
+
 2007/08/20 (0.30)
     * Atom 1.0 supported. Atom 0.3 is still default. (thanks to takemaru)
       Note that future version of this would change its default as Atom 1.0.

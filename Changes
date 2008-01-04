@@ -1,9 +1,10 @@
 # XML::FeedPP Changes
 
-2007/12/23 (0.32)
-    * commited on Google Code Hosting (Subversion)
-      http://code.google.com/p/xml-feedpp/
-      http://xml-feedpp.googlecode.com/svn/
+2008/01/05 (0.33)
+    * Subversion on Google Code
+      http://xml-treepp.googlecode.com/svn/trunk/XML-FeedPP/
+    * XML::FeedPP::Plugin::DumpJSON module branched
+      http://search.cpan.org/dist/XML-FeedPP-Plugin-DumpJSON/
 
 2007/11/16 (0.31) not released
     * getting from multiple nodes is supported for <media:thumbnail url="">

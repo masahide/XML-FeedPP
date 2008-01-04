@@ -350,7 +350,7 @@ Yusuke Kawasaki, http://www.kawa.net/
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (c) 2006-2007 Yusuke Kawasaki. All rights reserved.
+Copyright (c) 2006-2008 Yusuke Kawasaki. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
@@ -371,7 +371,7 @@ use vars qw(
     $XMLNS_ATOM10
 );
 
-$VERSION = "0.32";
+$VERSION = "0.33";
 
 $RSS20_VERSION  = '2.0';
 $ATOM03_VERSION = '0.3';

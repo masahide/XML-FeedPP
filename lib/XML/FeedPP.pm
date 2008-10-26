@@ -371,7 +371,7 @@ use vars qw(
     $XMLNS_ATOM10
 );
 
-$VERSION = "0.35";
+$VERSION = "0.36";
 
 $RSS20_VERSION  = '2.0';
 $ATOM03_VERSION = '0.3';
@@ -2215,6 +2215,8 @@ sub rfc1123_to_w3cdtf {
     return unless defined $str;
     my ( $mday, $mon, $year, $hour, $min, $sec, $tz ) = ( $str =~ $rfc1123_regexp );
     return unless ( $year && $mon && $mday );
+    $year += 2000 if $year < 77;
+    $year += 1900 if $year < 100;
     $mon = $MoY{ uc($mon) } or return;
     if ( defined $tz && $tz ne '' && $tz ne 'GMT' ) {
         my $off = &get_tz_offset($tz) / 60;
@@ -2255,6 +2257,8 @@ sub rfc1123_to_epoch {
     return unless defined $str;
     my ( $mday, $mon, $year, $hour, $min, $sec, $tz ) = ( $str =~ $rfc1123_regexp );
     return unless ( $year && $mon && $mday );
+    $year += 2000 if $year < 77;
+    $year += 1900 if $year < 100;
     $mon = $MoY{ uc($mon) } or return;
     my $epoch = Time::Local::timegm( $sec, $min, $hour, $mday, $mon-1, $year-1900 );
     $epoch -= &get_tz_offset( $tz );

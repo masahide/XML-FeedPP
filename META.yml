@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               XML-FeedPP
-version:            0.37
+version:            0.38
 abstract:           ~
 author:  []
 license:            perl
@@ -9,7 +9,7 @@ configure_requires:
     ExtUtils::MakeMaker:  0
 requires:
     Test::More:   0
-    XML::TreePP:  0.37
+    XML::TreePP:  0.38
 no_index:
     directory:
         - t

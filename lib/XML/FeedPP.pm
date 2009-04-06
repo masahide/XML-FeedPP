@@ -58,9 +58,22 @@ halted.
 The URL on the remote web server is also available as the first argument.
 L<LWP::UserAgent> is required to download it.
 
-=head2  $feed = XML::FeedPP->new( "<?xml?><rss version=..." );
+=head2  $feed = XML::FeedPP->new( '<rss version="2.0">...' );
 
 The XML source code is also available as the first argument.
+
+=head2  $feed = XML::FeedPP->new( $source, -type => $type );
+
+The C<-type> argument allows you to specify type of $source 
+from choice of C<'file'>, C<'url'> or C<'string'>.
+
+=head2  $feed = XML::FeedPP->new( $source, utf8_flag => 1 );
+
+This makes utf8 flag on for every feed elements.
+Perl 5.8.1 or later is required to use this.
+
+Note that any other options for C<XML::TreePP> constructor are also 
+allowed like this. See more detail on L<XML::TreePP>.
 
 =head2  $feed = XML::FeedPP::RSS->new( $source );
 
@@ -107,6 +120,14 @@ $encoding is optional, and the default encoding is 'UTF-8'.  On Perl
 available.  On Perl 5.005 and 5.6.1, only four encodings supported by
 the Jcode module are available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and
 'ISO-2022-JP'.  'UTF-8' is recommended for overall compatibility.
+
+=head2  $string = $feed->to_string( indent => 4 );
+
+This makes the output more human readable by indenting appropriately.
+This does not strictly follow the XML specification but does looks nice.
+
+Note that any other options for C<XML::TreePP> constructor are also 
+allowed like this. See more detail on L<XML::TreePP>.
 
 =head2  $feed->to_file( $filename, $encoding );
 
@@ -371,7 +392,7 @@ use vars qw(
     $XMLNS_ATOM10
 );
 
-$VERSION = "0.38";
+$VERSION = "0.40";
 
 $RSS20_VERSION  = '2.0';
 $ATOM03_VERSION = '0.3';
@@ -456,6 +477,8 @@ sub new {
         my $root = join( " ", sort keys %$self );
         Carp::croak "Invalid feed format: $root";
     }
+
+    $self->validate_feed($source);
     $self->init_feed();
     $self->elements(@$init) if ref $init;
     $self;
@@ -471,38 +494,64 @@ sub feed_bless {
 sub load {
     my $self   = shift;
     my $source = shift;
+    my $args   = { @_ };
+    my $method = $args->{'-type'};
     Carp::croak "No feed source" unless defined $source;
 
+    if ( ! $method ) {
+        if ( $source =~ m#^https?://#s ) {
+            $method = 'url';
+        }
+        elsif ( $source =~ m#(?:\s*\xEF\xBB\xBF)?\s*
+                             (<(\?xml|!DOCTYPE|rdf:RDF|rss|feed)\W)#xis ) {
+            $method = 'string';
+        }
+        elsif ( $source !~ /[\r\n]/ && -f $source ) {
+            $method = 'file';
+        }
+        else {
+            Carp::croak "Invalid feed source: $source";
+        }
+    }
+
+    my $opts = { map { $_ => $args->{$_} } grep { ! /^-/ } keys %$args };
+    my $tpp = XML::TreePP->new(%$TREEPP_OPTIONS, %$opts);
+
     my $tree;
-    my $tpp = XML::TreePP->new(%$TREEPP_OPTIONS, @_);
-    if ( $source =~ m#^https?://#s ) {
+    if ( $method eq 'url' ) {
         $tree = $tpp->parsehttp( GET => $source );
     }
-    elsif ( $source =~ m#(^\s*)(<(\?xml|!DOCTYPE|rdf:RDF|rss|feed)\W)#i ) {
+    elsif ( $method eq 'string' ) {
         $tree = $tpp->parse($source);
     }
-    elsif ( $source !~ /[\r\n]/ && -f $source ) {
+    elsif ( $method eq 'file' ) {
         $tree = $tpp->parsefile($source);
     }
-    Carp::croak "Invalid feed source: $source" unless ref $tree;
+    else {
+        Carp::croak "Invalid load type: $method";
+    }
+
+    Carp::croak "Loading failed: $source" unless ref $tree;
     %$self = %$tree;    # override myself
     $self;
 }
 
 sub to_string {
-    my $self   = shift;
-    my $encode = shift;
-    my $opt = { output_encoding => $encode, @_ };
-    my $tpp = XML::TreePP->new( %$TREEPP_OPTIONS, %$opt );
+    my $self = shift;
+    my( $args, $encode, @rest ) = XML::FeedPP::Util::param_even_odd(@_);
+    $args ||= \@rest;
+    my @opts = ( output_encoding => $encode ) if $encode;
+    my $tpp = XML::TreePP->new( %$TREEPP_OPTIONS, @opts, @$args );
     $tpp->write( $self, $encode );
 }
 
 sub to_file {
-    my $self   = shift;
-    my $file   = shift;
-    my $encode = shift;
-    my $opt = { output_encoding => $encode, @_ };
-    my $tpp = XML::TreePP->new( %$TREEPP_OPTIONS, %$opt );
+    my $self = shift;
+    my $file = shift;
+    my( $args, $encode, @rest ) = XML::FeedPP::Util::param_even_odd(@_);
+    $args ||= \@rest;
+    my @opts = ( output_encoding => $encode ) if $encode;
+    my $tpp = XML::TreePP->new( %$TREEPP_OPTIONS, @opts, @$args );
     $tpp->writefile( $file, $self, $encode );
 }
 
@@ -787,13 +836,19 @@ sub new {
     bless $self, $package;
     if ( defined $source ) {
         $self->load($source, @rest);
-        if ( !ref $self || !ref $self->{rss} ) {
-            Carp::croak "Invalid RSS format: $source";
-        }
+        $self->validate_feed($source);
     }
     $self->init_feed();
     $self->elements(@$init) if ref $init;
     $self;
+}
+
+sub validate_feed {
+    my $self   = shift;
+    my $source = shift || $self;
+    if ( !ref $self || !ref $self->{rss} ) {
+        Carp::croak "Invalid RSS format: $source";
+    }
 }
 
 sub init_feed {
@@ -1068,15 +1123,20 @@ sub new {
     bless $self, $package;
     if ( defined $source ) {
         $self->load($source, @rest);
-        if ( !ref $self || !ref $self->{'rdf:RDF'} ) {
-            Carp::croak "Invalid RDF format: $source";
-        }
+        $self->validate_feed($source);
     }
     $self->init_feed();
     $self->elements(@$init) if ref $init;
     $self;
 }
 
+sub validate_feed {
+    my $self   = shift;
+    my $source = shift || $self;
+    if ( !ref $self || !ref $self->{'rdf:RDF'} ) {
+        Carp::croak "Invalid RDF format: $source";
+    }
+}
 sub init_feed {
     my $self = shift or return;
 
@@ -1368,13 +1428,19 @@ sub new {
     bless $self, $package;
     if ( defined $source ) {
         $self->load($source, @rest);
-        if ( !ref $self || !ref $self->{feed} ) {
-            Carp::croak "Invalid Atom format: $source";
-        }
+        $self->validate_feed($source);
     }
     $self->init_feed();
     $self->elements(@$init) if ref $init;
     $self;
+}
+
+sub validate_feed {
+    my $self   = shift;
+    my $source = shift || $self;
+    if ( !ref $self || !ref $self->{feed} ) {
+        Carp::croak "Invalid Atom format: $source";
+    }
 }
 
 sub merge_native_channel {
@@ -2023,7 +2089,7 @@ sub set {
                 # ok
             }
             elsif ( defined $node->{$child} ) {
-                $node->{$child} = { "#text" => $node->{$child} };
+                $node->{$child} = { '#text' => $node->{$child} };
             }
             else {
                 $node->{$child} = {};
@@ -2035,21 +2101,30 @@ sub set {
             $node->{ '-' . $attr } = $val;
         }
         elsif ( defined $attr ) {
+            if ( ref $node->{$tagname} && 
+                 UNIVERSAL::isa( $node->{$tagname}, 'ARRAY' )) {
+                $node->{$tagname} = shift @{$node->{$tagname}};
+            }
+            my $hkey = '-' . $attr;
             if ( ref $node->{$tagname} ) {
-                $node->{$tagname}->{ '-' . $attr } = $val;
+                $node->{$tagname}->{$hkey} = $val;
             }
             elsif ( defined $node->{$tagname} ) {
                 $node->{$tagname} = {
-                    "#text"     => $node->{$tagname},
-                    '-' . $attr => $val,
+                    '#text' => $node->{$tagname},
+                    $hkey   => $val,
                 };
             }
             else {
-                $node->{$tagname} = { '-' . $attr => $val, };
+                $node->{$tagname} = { $hkey => $val };
             }
         }
         elsif ( defined $tagname ) {
-            if ( ref $self->{$tagname} ) {
+            if ( ref $node->{$tagname} && 
+                 UNIVERSAL::isa( $node->{$tagname}, 'ARRAY' )) {
+                $node->{$tagname} = shift @{$node->{$tagname}};
+            }
+            if ( ref $node->{$tagname} ) {
                 $node->{$tagname}->{'#text'} = $val;
             }
             else {
@@ -2079,17 +2154,26 @@ sub get {
     }
     elsif ( defined $attr ) {                   # node@attribute
         return unless ref $node->{$tagname};
+        my $hkey = '-' . $attr;
         if ( UNIVERSAL::isa( $node->{$tagname}, 'ARRAY' )) {
-            my $list = [ map { $_->{'-'.$attr} }
-                         grep { exists $_->{'-'.$attr} }
-                         @{$node->{$tagname}} ];
-            return wantarray ? @$list : shift @$list;
+            my $list = [
+                map { ref $_ && exists $_->{$hkey} ? $_->{$hkey} : undef }
+                @{$node->{$tagname}} ];
+            return @$list if wantarray;
+            return ( grep { defined $_ } @$list )[0];
         }
-        return unless exists $node->{$tagname}->{ '-' . $attr };
-        return $node->{$tagname}->{ '-' . $attr };
+        return unless exists $node->{$tagname}->{$hkey};
+        return $node->{$tagname}->{$hkey};
     }
     else {                                      # node
         return $node->{$tagname} unless ref $node->{$tagname};
+        if ( UNIVERSAL::isa( $node->{$tagname}, 'ARRAY' )) {
+            my $list = [
+                map { ref $_ ? $_->{'#text'} : $_ }
+                @{$node->{$tagname}} ];
+            return @$list if wantarray;
+            return ( grep { defined $_ } @$list )[0];
+        }
         return $node->{$tagname}->{'#text'};
     }
 }
@@ -2179,7 +2263,7 @@ sub set_attr {
     my $attr = \@_;
     if ( defined $self->{$elem} ) {
         if ( !ref $self->{$elem} ) {
-            $self->{$elem} = { "#text" => $self->{$elem} };
+            $self->{$elem} = { '#text' => $self->{$elem} };
         }
     }
     else {

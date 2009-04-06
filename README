@@ -50,8 +50,19 @@ METHODS FOR FEED
     The URL on the remote web server is also available as the first
     argument. LWP::UserAgent is required to download it.
 
-  $feed = XML::FeedPP->new( "<?xml?><rss version=..." );
+  $feed = XML::FeedPP->new( '<rss version="2.0">...' );
     The XML source code is also available as the first argument.
+
+  $feed = XML::FeedPP->new( $source, -type => $type );
+    The "-type" argument allows you to specify type of $source from choice
+    of 'file', 'url' or 'string'.
+
+  $feed = XML::FeedPP->new( $source, utf8_flag => 1 );
+    This makes utf8 flag on for every feed elements. Perl 5.8.1 or later is
+    required to use this.
+
+    Note that any other options for "XML::TreePP" constructor are also
+    allowed like this. See more detail on XML::TreePP.
 
   $feed = XML::FeedPP::RSS->new( $source );
     This constructor method creates an instance for an RSS 2.0 feed. The
@@ -91,6 +102,13 @@ METHODS FOR FEED
     On Perl 5.005 and 5.6.1, only four encodings supported by the Jcode
     module are available: 'UTF-8', 'Shift_JIS', 'EUC-JP' and 'ISO-2022-JP'.
     'UTF-8' is recommended for overall compatibility.
+
+  $string = $feed->to_string( indent => 4 );
+    This makes the output more human readable by indenting appropriately.
+    This does not strictly follow the XML specification but does looks nice.
+
+    Note that any other options for "XML::TreePP" constructor are also
+    allowed like this. See more detail on XML::TreePP.
 
   $feed->to_file( $filename, $encoding );
     This method generate an XML file. The output $encoding is optional, and

@@ -1451,7 +1451,8 @@ sub author {
 sub link {
     my $self = shift;
     my $link = shift;
-    return $self->get_value("link") unless defined $link;
+    #return $self->get_value("link") unless defined $link;
+    return $self->{'-rdf:about'} unless defined $link;
     $self->{'-rdf:about'} = $link;
     $self->set_value( "link", $link, @_ );
 }
